@@ -14,12 +14,14 @@ bmtc/
 ## Tech Stack
 
 ### Backend
+
 - Node.js
 - Express.js
 - Sequelize ORM
 - PostgreSQL
 
 ### Frontend
+
 - React
 - Vite
 - Tailwind CSS
@@ -28,6 +30,7 @@ bmtc/
 ## Setup Instructions
 
 ### Prerequisites
+
 - Node.js (v14 or higher)
 - PostgreSQL
 - npm or yarn
@@ -35,16 +38,19 @@ bmtc/
 ### Backend Setup
 
 1. Navigate to the backend directory:
+
    ```bash
    cd bmtc-backend
    ```
 
 2. Install dependencies:
+
    ```bash
    npm install
    ```
 
 3. Create a `.env` file in `bmtc-backend/` with your database credentials:
+
    ```env
    DB_NAME=your_database_name
    DB_USER=your_username
@@ -54,6 +60,7 @@ bmtc/
    ```
 
 4. Create `config/config.json` for Sequelize migrations (optional):
+
    ```json
    {
      "development": {
@@ -68,16 +75,19 @@ bmtc/
    ```
 
 5. Run database migrations (if available):
+
    ```bash
    npx sequelize-cli db:migrate
    ```
 
 6. Seed the database (optional):
+
    ```bash
    npx sequelize-cli db:seed:all
    ```
 
 7. Start the backend server:
+
    ```bash
    node src/server.js
    ```
@@ -87,16 +97,19 @@ bmtc/
 ### Frontend Setup
 
 1. Navigate to the frontend directory:
+
    ```bash
    cd bmtc-ui/frontend
    ```
 
 2. Install dependencies:
+
    ```bash
    npm install
    ```
 
 3. Start the development server:
+
    ```bash
    npm run dev
    ```
@@ -127,4 +140,3 @@ bmtc/
 - Make sure PostgreSQL is running before starting the backend
 - The backend includes CORS middleware to allow frontend communication
 - Environment variables are required for database connection
-
