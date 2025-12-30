@@ -113,45 +113,45 @@ export default function Dashboard() {
   ];
 
   const stats = [
-    { 
-      label: "Active Buses", 
-      value: "118", 
-      change: "+2%", 
+    {
+      label: "Active Buses",
+      value: "118",
+      change: "+2%",
       icon: Activity,
       color: "bg-gradient-to-r from-blue-500 to-blue-600"
     },
-    { 
-      label: "On-time Performance", 
-      value: "94.2%", 
-      change: "+1.5%", 
+    {
+      label: "On-time Performance",
+      value: "94.2%",
+      change: "+1.5%",
       icon: TrendingUp,
       color: "bg-gradient-to-r from-green-500 to-green-600"
     },
-    { 
-      label: "Active Drivers", 
-      value: "156", 
-      change: "+4%", 
+    {
+      label: "Active Drivers",
+      value: "156",
+      change: "+4%",
       icon: Users,
       color: "bg-gradient-to-r from-purple-500 to-purple-600"
     },
-    { 
-      label: "Daily Passengers", 
-      value: "5.2M", 
-      change: "+3.2%", 
+    {
+      label: "Daily Passengers",
+      value: "5.2M",
+      change: "+3.2%",
       icon: Route,
       color: "bg-gradient-to-r from-amber-500 to-amber-600"
     },
-    { 
-      label: "Avg. Speed", 
-      value: "32 km/h", 
-      change: "-0.5%", 
+    {
+      label: "Avg. Speed",
+      value: "32 km/h",
+      change: "-0.5%",
       icon: Shield,
       color: "bg-gradient-to-r from-cyan-500 to-cyan-600"
     },
-    { 
-      label: "Fleet Health", 
-      value: "92%", 
-      change: "+1.8%", 
+    {
+      label: "Fleet Health",
+      value: "92%",
+      change: "+1.8%",
       icon: Bus,
       color: "bg-gradient-to-r from-emerald-500 to-emerald-600"
     }
@@ -201,7 +201,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        
+
         {/* Stats Overview */}
         <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           {stats.map((stat, index) => {
@@ -293,14 +293,13 @@ export default function Dashboard() {
                     <p className="text-sm font-medium text-gray-900 truncate">{activity.description}</p>
                     <p className="text-xs text-gray-500 mt-0.5">{activity.time}</p>
                   </div>
-                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                    activity.type === 'update' ? 'bg-blue-100 text-blue-800' :
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${activity.type === 'update' ? 'bg-blue-100 text-blue-800' :
                     activity.type === 'complaint' ? 'bg-red-100 text-red-800' :
-                    activity.type === 'maintenance' ? 'bg-green-100 text-green-800' :
-                    activity.type === 'report' ? 'bg-purple-100 text-purple-800' :
-                    activity.type === 'personnel' ? 'bg-cyan-100 text-cyan-800' :
-                    'bg-emerald-100 text-emerald-800'
-                  }`}>
+                      activity.type === 'maintenance' ? 'bg-green-100 text-green-800' :
+                        activity.type === 'report' ? 'bg-purple-100 text-purple-800' :
+                          activity.type === 'personnel' ? 'bg-cyan-100 text-cyan-800' :
+                            'bg-emerald-100 text-emerald-800'
+                    }`}>
                     {activity.type.charAt(0).toUpperCase() + activity.type.slice(1)}
                   </span>
                 </div>

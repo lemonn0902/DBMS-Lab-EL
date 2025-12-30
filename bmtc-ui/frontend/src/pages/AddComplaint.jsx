@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 
 export default function AddComplaint() {
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     complaint_id: "",
     complaint_date: "",
@@ -16,8 +18,25 @@ export default function AddComplaint() {
 
   const handleSubmit = async e => {
     e.preventDefault();
-    await api.post("/complaints", form);
-    alert("Complaint submitted!");
+    try {
+      const payload = {
+        complaint_id: parseInt(form.complaint_id),
+        complaint_date: form.complaint_date || null,
+        status: form.status || "Pending",
+        bus_id: form.bus_id ? parseInt(form.bus_id) : null,
+        driver_id: form.driver_id ? parseInt(form.driver_id) : null,
+        complaint_details: form.complaint_details || null
+      };
+      
+      console.log("Submitting complaint payload:", payload);
+      await api.post("/complaints", payload);
+      alert("Complaint submitted successfully!");
+      navigate("/complaints");
+    } catch (error) {
+      console.error("Error submitting complaint:", error);
+      const errorMessage = error.response?.data?.error || error.response?.data?.details || error.message || "Failed to submit complaint";
+      alert(`Error: ${errorMessage}`);
+    }
   };
 
   const fieldLabels = {
@@ -54,11 +73,14 @@ export default function AddComplaint() {
 
         {/* Form Card */}
         <div className="bg-white rounded-xl shadow-lg p-8">
-          <div className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {Object.keys(form).map(key => (
               <div key={key}>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
                   {fieldLabels[key]}
+                  {(key === "complaint_id" || key === "complaint_date" || key === "complaint_details") && (
+                    <span className="text-red-500 ml-1">*</span>
+                  )}
                 </label>
                 
                 {key === "status" ? (
@@ -79,6 +101,7 @@ export default function AddComplaint() {
                     placeholder={`Enter ${fieldLabels[key].toLowerCase()}`}
                     onChange={handleChange}
                     rows={4}
+                    required={key === "complaint_details"}
                     className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all outline-none resize-none"
                   />
                 ) : (
@@ -88,22 +111,32 @@ export default function AddComplaint() {
                     value={form[key]}
                     placeholder={`Enter ${fieldLabels[key].toLowerCase()}`}
                     onChange={handleChange}
+                    required={key === "complaint_id" || key === "complaint_date"}
                     className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all outline-none"
                   />
                 )}
               </div>
             ))}
 
-            <button 
-              onClick={handleSubmit}
-              className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-4 rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Submit Complaint
-            </button>
-          </div>
+            <div className="flex gap-4 pt-4">
+              <button 
+                type="submit"
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-4 rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Submit Complaint
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/complaints")}
+                className="px-6 border-2 border-slate-300 text-slate-700 font-semibold py-4 rounded-lg hover:bg-slate-50 transition-colors duration-200"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
         </div>
 
         {/* Info Card */}

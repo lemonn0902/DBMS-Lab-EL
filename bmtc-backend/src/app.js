@@ -22,6 +22,7 @@ app.use("/api/routes", require("./routes/routeRoutes"));
 app.use("/api/shifts", require("./routes/shiftRoutes"));
 app.use("/api/complaints", require("./routes/complaintRoutes"));
 app.use("/api/accidents", require("./routes/accidentReportRoutes"));
+app.use("/api/reports", require("./routes/reportRoutes"));
 app.use("/api/auth", require("./routes/authRoutes"));
 
 module.exports = app;

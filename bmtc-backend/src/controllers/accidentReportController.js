@@ -25,10 +25,44 @@ exports.getAccidentById = async (req, res) => {
 
 exports.createAccident = async (req, res) => {
   try {
+    console.log("Received accident data:", req.body);
+    
+    // Validate required fields
+    if (!req.body.accident_id) {
+      return res.status(400).json({ error: "Accident ID is required" });
+    }
+    
     const data = await AccidentReport.create(req.body);
-    res.json(data);
+    res.status(201).json(data);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Error creating accident:", err);
+    
+    // Handle Sequelize validation errors
+    if (err.name === 'SequelizeValidationError') {
+      return res.status(400).json({ 
+        error: "Validation error", 
+        details: err.errors.map(e => e.message).join(', ')
+      });
+    }
+    
+    // Handle unique constraint errors
+    if (err.name === 'SequelizeUniqueConstraintError') {
+      return res.status(400).json({ 
+        error: "Accident ID already exists" 
+      });
+    }
+    
+    // Handle foreign key constraint errors
+    if (err.name === 'SequelizeForeignKeyConstraintError') {
+      return res.status(400).json({ 
+        error: "Invalid reference: Driver, Bus, or Route ID does not exist" 
+      });
+    }
+    
+    res.status(500).json({ 
+      error: err.message || "Internal server error",
+      details: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    });
   }
 };
 

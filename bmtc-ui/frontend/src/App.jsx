@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, NavLink, useLocation, useNavigate } from "react-router-dom";
 import Dashboard from "./pages/Dashboard.jsx";
+import Reports from "./pages/Reports.jsx";
 import Drivers from "./pages/Drivers.jsx";
 import AddDriver from "./pages/AddDriver.jsx";
 import Buses from "./pages/Buses.jsx";
@@ -9,6 +10,7 @@ import Shifts from "./pages/Shifts.jsx";
 import Complaints from "./pages/Complaints.jsx";
 import AddComplaint from "./pages/AddComplaint.jsx";
 import Accidents from "./pages/Accidents.jsx";
+import AddAccident from "./pages/AddAccident.jsx";
 import AddConductor from "./pages/AddConductor.jsx";
 import Conductors from "./pages/Conductors.jsx";
 import Login from "./pages/Login.jsx";
@@ -30,6 +32,7 @@ import {
   ChevronRight,
   X,
   UserCog,
+  BarChart3,
   Calendar
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
@@ -38,13 +41,13 @@ import { useState, useEffect, useRef } from "react";
 function ProtectedRoute({ children }) {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
-  
+
   useEffect(() => {
     if (!token) {
       navigate("/login");
     }
   }, [token, navigate]);
-  
+
   if (!token) return null;
   return children;
 }
@@ -52,14 +55,14 @@ function ProtectedRoute({ children }) {
 function App() {
   const location = useLocation();
   const isAuthPage = location.pathname === "/login" || location.pathname === "/signup";
-  
+
   // Sidebar & Layout State
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [currentDate, setCurrentDate] = useState("");
   const [sidebarWidth, setSidebarWidth] = useState(256);
   const [isDragging, setIsDragging] = useState(false);
-  
+
   // User Data State
   const [user, setUser] = useState({ name: "Admin User", role: "System Administrator" });
 
@@ -70,8 +73,8 @@ function App() {
   useEffect(() => {
     // 1. Set Date
     const date = new Date();
-    setCurrentDate(date.toLocaleDateString('en-US', { 
-      weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' 
+    setCurrentDate(date.toLocaleDateString('en-US', {
+      weekday: 'long', month: 'short', day: 'numeric', year: 'numeric'
     }));
 
     // 2. Set User from LocalStorage
@@ -124,6 +127,8 @@ function App() {
     { path: "/complaints", label: "Complaints", icon: FileText },
     { path: "/add-complaint", label: "Add Complaint", icon: PlusCircle },
     { path: "/accidents", label: "Accidents", icon: AlertTriangle },
+    { path: "/add-accident", label: "Add Accident", icon: PlusCircle },
+    { path: "/reports", label: "Reports", icon: BarChart3 },
   ];
 
   return (
@@ -135,12 +140,11 @@ function App() {
 
       {/* Sidebar */}
       {!isAuthPage && (
-        <aside 
+        <aside
           ref={sidebarRef}
-          className={`fixed inset-y-0 left-0 z-50 flex flex-col bg-white border-r border-gray-200 shadow-xl transition-all duration-300 lg:relative lg:translate-x-0 ${
-            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          }`}
-          style={{ 
+          className={`fixed inset-y-0 left-0 z-50 flex flex-col bg-white border-r border-gray-200 shadow-xl transition-all duration-300 lg:relative lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+            }`}
+          style={{
             width: isCollapsed ? '80px' : `${sidebarWidth}px`,
             transition: isDragging ? 'none' : 'width 300ms cubic-bezier(0.4, 0, 0.2, 1)'
           }}
@@ -157,15 +161,15 @@ function App() {
                 </div>
               )}
             </div>
-            
+
             {!isCollapsed && (
-              <div 
+              <div
                 className="hidden lg:block absolute -right-1 top-1/2 w-2 h-20 cursor-col-resize hover:bg-blue-400 z-10"
                 onMouseDown={() => setIsDragging(true)}
               />
             )}
 
-            <button 
+            <button
               onClick={() => setIsCollapsed(!isCollapsed)}
               className="hidden lg:flex absolute -right-3 top-7 bg-white border border-gray-200 rounded-full p-1 shadow-md z-50 hover:scale-110 transition-transform"
             >
@@ -180,8 +184,7 @@ function App() {
                 key={item.path}
                 to={item.path}
                 className={({ isActive }) =>
-                  `flex items-center px-3 py-3 rounded-xl transition-all ${
-                    isActive ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600'
+                  `flex items-center px-3 py-3 rounded-xl transition-all ${isActive ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600'
                   } ${isCollapsed ? 'justify-center' : ''}`
                 }
               >
@@ -201,7 +204,7 @@ function App() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-gray-900 truncate">{user.name}</p>
                   <p className="text-[10px] text-gray-500 uppercase tracking-widest">{user.role}</p>
-                  <button 
+                  <button
                     onClick={handleLogout}
                     className="text-xs text-red-500 font-semibold hover:text-red-700 flex items-center mt-1 transition-colors"
                   >
@@ -230,6 +233,7 @@ function App() {
         <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-slate-50">
           <div className={`${isAuthPage ? '' : 'min-h-full bg-white rounded-3xl shadow-sm border border-gray-100 p-1'} w-full transition-all duration-500`}>
             <Routes>
+              <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
@@ -244,6 +248,7 @@ function App() {
               <Route path="/complaints" element={<ProtectedRoute><Complaints /></ProtectedRoute>} />
               <Route path="/add-complaint" element={<ProtectedRoute><AddComplaint /></ProtectedRoute>} />
               <Route path="/accidents" element={<ProtectedRoute><Accidents /></ProtectedRoute>} />
+              <Route path="/add-accident" element={<ProtectedRoute><AddAccident /></ProtectedRoute>} />
             </Routes>
           </div>
         </div>
