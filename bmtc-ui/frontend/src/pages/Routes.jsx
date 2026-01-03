@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../services/api";
 import { useTheme } from "../contexts/ThemeContext.jsx";
+import { useNavigate } from "react-router-dom";
 import {
   Search,
   Filter,
@@ -22,11 +23,13 @@ import {
   CheckCircle,
   XCircle,
   MoreVertical,
-  BarChart3
+  BarChart3,
+  X
 } from "lucide-react";
 
 export default function Routes() {
   const { darkMode } = useTheme();
+  const navigate = useNavigate();
   const [routes, setRoutes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -34,6 +37,10 @@ export default function Routes() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedRoute, setSelectedRoute] = useState(null);
   const [viewMode, setViewMode] = useState("grid"); // "grid" or "list"
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showAnalyzeModal, setShowAnalyzeModal] = useState(false);
+  const [editingRoute, setEditingRoute] = useState(null);
+  const [analyzingRoute, setAnalyzingRoute] = useState(null);
   const routesPerPage = 8;
 
   useEffect(() => {
@@ -62,15 +69,24 @@ export default function Routes() {
   };
 
   const calculateEfficiency = (route) => {
-    // Mock efficiency calculation based on distance and duration
+    // Better efficiency calculation based on distance and duration
     let duration = 1;
     if (typeof route.average_duration === 'object') {
       duration = (route.average_duration.hours || 0) * 60 + (route.average_duration.minutes || 0);
     } else {
       duration = parseInt(route.average_duration) || 1;
     }
-    const efficiency = Math.round((route.total_distance / duration) * 10);
-    return Math.min(efficiency, 100);
+
+    // Calculate actual speed in km/min
+    const speedKmPerMin = route.total_distance / duration;
+
+    // Use 0.8 km/min (48 km/h) as optimal speed for city buses
+    // This is more realistic than 1 km/min (60 km/h) for urban routes
+    const optimalSpeed = 0.8;
+
+    // Efficiency = (actual speed / optimal speed) * 100
+    const efficiency = Math.min(Math.round((speedKmPerMin / optimalSpeed) * 100), 100);
+    return Math.max(efficiency, 1); // Ensure minimum of 1%
   };
 
   const filteredRoutes = routes.filter(route => {
@@ -117,11 +133,29 @@ export default function Routes() {
   };
 
   const handleEdit = (route) => {
-    console.log("Edit route:", route);
+    setEditingRoute(route);
+    setShowEditModal(true);
   };
 
   const handleAnalyze = (route) => {
-    console.log("Analyze route:", route);
+    setAnalyzingRoute(route);
+    setShowAnalyzeModal(true);
+  };
+
+  const handleAddRoute = () => {
+    navigate('/add-route');
+  };
+
+  const handleUpdateRoute = async (updatedRoute) => {
+    try {
+      await api.put(`/routes/${updatedRoute.route_id}`, updatedRoute);
+      setRoutes(routes.map(r => r.route_id === updatedRoute.route_id ? updatedRoute : r));
+      setShowEditModal(false);
+      setEditingRoute(null);
+    } catch (error) {
+      console.error("Error updating route:", error);
+      alert("Failed to update route");
+    }
   };
 
   if (loading) {
@@ -144,7 +178,10 @@ export default function Routes() {
             <h1 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Route Management</h1>
             <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} mt-1`}>Monitor and manage bus routes across the network</p>
           </div>
-          <button className="inline-flex items-center px-4 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+          <button
+            onClick={handleAddRoute}
+            className="inline-flex items-center px-4 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+          >
             <Plus className="h-5 w-5 mr-2" />
             Add New Route
           </button>
@@ -209,17 +246,17 @@ export default function Routes() {
       </div>
 
       {/* Filters and Controls */}
-      <div className="bg-white rounded-xl p-4 mb-6 shadow-sm border border-gray-100">
+      <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-xl p-4 mb-6 shadow-sm border`}>
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-400' : 'text-gray-400'} h-5 w-5`} />
               <input
                 type="text"
                 placeholder="Search routes by start point, end point, or ID..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                className={`w-full pl-10 pr-4 py-2.5 border ${darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none ${darkMode ? 'placeholder-gray-400' : ''}`}
               />
             </div>
           </div>
@@ -229,25 +266,25 @@ export default function Routes() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="appearance-none pl-10 pr-8 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+                className={`appearance-none pl-10 pr-8 py-2.5 border ${darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none ${darkMode ? 'bg-gray-700' : 'bg-white'}`}
               >
                 <option value="distance">Sort by Distance</option>
                 <option value="duration">Sort by Duration</option>
                 <option value="efficiency">Sort by Efficiency</option>
               </select>
-              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Filter className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-400' : 'text-gray-400'} h-5 w-5`} />
             </div>
 
-            <div className="flex items-center bg-gray-100 rounded-lg p-1">
+            <div className={`flex items-center ${darkMode ? 'bg-gray-700' : 'bg-gray-100'} rounded-lg p-1`}>
               <button
                 onClick={() => setViewMode("grid")}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium ${viewMode === "grid" ? "bg-white shadow" : "text-gray-600"}`}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium ${viewMode === "grid" ? (darkMode ? 'bg-gray-600 text-white' : 'bg-white shadow') : (darkMode ? 'text-gray-300' : 'text-gray-600')}`}
               >
                 Grid
               </button>
               <button
                 onClick={() => setViewMode("list")}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium ${viewMode === "list" ? "bg-white shadow" : "text-gray-600"}`}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium ${viewMode === "list" ? (darkMode ? 'bg-gray-600 text-white' : 'bg-white shadow') : (darkMode ? 'text-gray-300' : 'text-gray-600')}`}
               >
                 List
               </button>
@@ -255,17 +292,17 @@ export default function Routes() {
 
             <button
               onClick={() => fetchRoutes()}
-              className="inline-flex items-center px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              className={`inline-flex items-center px-4 py-2.5 border ${darkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-gray-300 text-gray-600 hover:bg-gray-50'} rounded-lg transition-colors`}
             >
-              <RefreshCw className="h-5 w-5 mr-2 text-gray-600" />
+              <RefreshCw className="h-5 w-5 mr-2" />
               Refresh
             </button>
 
             <button
               onClick={() => console.log("Export routes")}
-              className="inline-flex items-center px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              className={`inline-flex items-center px-4 py-2.5 border ${darkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-gray-300 text-gray-600 hover:bg-gray-50'} rounded-lg transition-colors`}
             >
-              <Download className="h-5 w-5 mr-2 text-gray-600" />
+              <Download className="h-5 w-5 mr-2" />
               Export
             </button>
           </div>
@@ -278,26 +315,26 @@ export default function Routes() {
           {currentRoutes.map((route) => {
             const efficiency = calculateEfficiency(route);
             return (
-              <div key={route.route_id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
+              <div key={route.route_id} className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition-shadow`}>
                 <div className="p-5">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center">
-                      <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                        <Route className="h-5 w-5 text-blue-600" />
+                      <div className={`h-10 w-10 rounded-lg ${darkMode ? 'bg-blue-900' : 'bg-blue-100'} flex items-center justify-center`}>
+                        <Route className={`h-5 w-5 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
                       </div>
                       <div className="ml-3">
-                        <h3 className="font-semibold text-gray-900">Route #{route.route_id}</h3>
-                        <p className="text-sm text-gray-500">ID: {route.route_id}</p>
+                        <h3 className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Route #{route.route_id}</h3>
+                        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>ID: {route.route_id}</p>
                       </div>
                     </div>
                     <div className="flex space-x-1">
                       <button
                         onClick={() => handleView(route)}
-                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
+                        className={`p-1.5 ${darkMode ? 'text-gray-400 hover:text-blue-600 hover:bg-blue-900' : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'} rounded-lg`}
                       >
                         <Eye className="h-4 w-4" />
                       </button>
-                      <button className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg">
+                      <button className={`p-1.5 ${darkMode ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-700' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'} rounded-lg`}>
                         <MoreVertical className="h-4 w-4" />
                       </button>
                     </div>
@@ -307,27 +344,27 @@ export default function Routes() {
                     <div className="flex items-center">
                       <MapPin className="h-4 w-4 text-green-600 mr-2" />
                       <div className="flex-1">
-                        <p className="text-xs text-gray-500">Start Point</p>
-                        <p className="text-sm font-medium text-gray-900">{route.start_point}</p>
+                        <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Start Point</p>
+                        <p className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{route.start_point}</p>
                       </div>
                     </div>
 
                     <div className="flex items-center">
                       <MapPin className="h-4 w-4 text-red-600 mr-2" />
                       <div className="flex-1">
-                        <p className="text-xs text-gray-500">End Point</p>
-                        <p className="text-sm font-medium text-gray-900">{route.end_point}</p>
+                        <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>End Point</p>
+                        <p className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{route.end_point}</p>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-100">
+                    <div className={`grid grid-cols-2 gap-3 pt-3 ${darkMode ? 'border-gray-700' : 'border-gray-100'} border-t`}>
                       <div>
-                        <p className="text-xs text-gray-500">Distance</p>
-                        <p className="text-sm font-semibold text-gray-900">{route.total_distance} km</p>
+                        <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Distance</p>
+                        <p className={`text-sm font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{route.total_distance} km</p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-500">Duration</p>
-                        <p className="text-sm font-semibold text-gray-900">
+                        <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Duration</p>
+                        <p className={`text-sm font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                           {typeof route.average_duration === 'object'
                             ? `${route.average_duration.hours || 0}h ${route.average_duration.minutes || 0}m`
                             : route.average_duration}
@@ -335,14 +372,14 @@ export default function Routes() {
                       </div>
                     </div>
 
-                    <div className="pt-3 border-t border-gray-100">
+                    <div className={`pt-3 ${darkMode ? 'border-gray-700' : 'border-gray-100'} border-t`}>
                       <div className="flex items-center justify-between mb-1">
-                        <p className="text-xs text-gray-500">Efficiency Score</p>
+                        <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Efficiency Score</p>
                         <span className={`text-xs font-medium ${efficiency >= 70 ? 'text-green-600' : efficiency >= 50 ? 'text-amber-600' : 'text-red-600'}`}>
                           {efficiency}%
                         </span>
                       </div>
-                      <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
+                      <div className={`h-1.5 w-full ${darkMode ? 'bg-gray-600' : 'bg-gray-200'} rounded-full overflow-hidden`}>
                         <div
                           className={`h-full ${efficiency >= 70 ? 'bg-green-500' : efficiency >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
                           style={{ width: `${efficiency}%` }}
@@ -547,6 +584,123 @@ export default function Routes() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {showEditModal && editingRoute && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl p-6 max-w-md w-full mx-4`}>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Edit Route</h2>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className={`p-1 ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded`}
+              >
+                <X className={`h-5 w-5 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Start Point</label>
+                <input
+                  type="text"
+                  value={editingRoute.start_point || ''}
+                  onChange={(e) => setEditingRoute({ ...editingRoute, start_point: e.target.value })}
+                  className={`w-full px-3 py-2 border ${darkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-gray-50'} rounded-lg`}
+                />
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>End Point</label>
+                <input
+                  type="text"
+                  value={editingRoute.end_point || ''}
+                  onChange={(e) => setEditingRoute({ ...editingRoute, end_point: e.target.value })}
+                  className={`w-full px-3 py-2 border ${darkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-gray-50'} rounded-lg`}
+                />
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Distance (km)</label>
+                <input
+                  type="number"
+                  value={editingRoute.total_distance || ''}
+                  onChange={(e) => setEditingRoute({ ...editingRoute, total_distance: parseFloat(e.target.value) })}
+                  className={`w-full px-3 py-2 border ${darkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-gray-50'} rounded-lg`}
+                />
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => handleUpdateRoute(editingRoute)}
+                  className="flex-1 bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
+                >
+                  Update Route
+                </button>
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg font-semibold hover:bg-gray-300 transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Analyze Modal */}
+      {showAnalyzeModal && analyzingRoute && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl p-6 max-w-lg w-full mx-4`}>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Route Analysis</h2>
+              <button
+                onClick={() => setShowAnalyzeModal(false)}
+                className={`p-1 ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded`}
+              >
+                <X className={`h-5 w-5 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                <h3 className={`font-semibold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Route #{analyzingRoute.route_id}</h3>
+                <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                  {analyzingRoute.start_point} → {analyzingRoute.end_point}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className={`p-3 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-blue-50'}`}>
+                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-blue-600'}`}>Distance</p>
+                  <p className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-blue-900'}`}>{analyzingRoute.total_distance} km</p>
+                </div>
+                <div className={`p-3 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-green-50'}`}>
+                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-green-600'}`}>Efficiency</p>
+                  <p className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-green-900'}`}>{calculateEfficiency(analyzingRoute)}%</p>
+                </div>
+              </div>
+
+              <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-amber-50'}`}>
+                <h4 className={`font-semibold mb-2 ${darkMode ? 'text-white' : 'text-amber-900'}`}>Performance Insights</h4>
+                <ul className={`text-sm space-y-1 ${darkMode ? 'text-gray-300' : 'text-amber-800'}`}>
+                  <li>• Route efficiency is {calculateEfficiency(analyzingRoute) >= 70 ? 'excellent' : calculateEfficiency(analyzingRoute) >= 50 ? 'moderate' : 'needs improvement'}</li>
+                  <li>• Average speed: {(analyzingRoute.total_distance / (typeof analyzingRoute.average_duration === 'object' ? (analyzingRoute.average_duration.hours || 0) * 60 + (analyzingRoute.average_duration.minutes || 0) : analyzingRoute.average_duration || 1)).toFixed(2)} km/min</li>
+                  <li>• Route covers {analyzingRoute.total_distance} km distance</li>
+                </ul>
+              </div>
+
+              <button
+                onClick={() => setShowAnalyzeModal(false)}
+                className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
+              >
+                Close Analysis
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
