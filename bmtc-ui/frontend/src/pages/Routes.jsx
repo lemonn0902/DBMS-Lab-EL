@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../services/api";
+import { useTheme } from "../contexts/ThemeContext.jsx";
 import {
   Search,
   Filter,
@@ -25,6 +26,7 @@ import {
 } from "lucide-react";
 
 export default function Routes() {
+  const { darkMode } = useTheme();
   const [routes, setRoutes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -61,7 +63,13 @@ export default function Routes() {
 
   const calculateEfficiency = (route) => {
     // Mock efficiency calculation based on distance and duration
-    const efficiency = Math.round((route.total_distance / (parseInt(route.average_duration) || 1)) * 10);
+    let duration = 1;
+    if (typeof route.average_duration === 'object') {
+      duration = (route.average_duration.hours || 0) * 60 + (route.average_duration.minutes || 0);
+    } else {
+      duration = parseInt(route.average_duration) || 1;
+    }
+    const efficiency = Math.round((route.total_distance / duration) * 10);
     return Math.min(efficiency, 100);
   };
 
@@ -78,8 +86,17 @@ export default function Routes() {
       case "distance":
         return b.total_distance - a.total_distance;
       case "duration":
-        const durationA = parseInt(a.average_duration) || 0;
-        const durationB = parseInt(b.average_duration) || 0;
+        let durationA = 0, durationB = 0;
+        if (typeof a.average_duration === 'object') {
+          durationA = (a.average_duration.hours || 0) * 60 + (a.average_duration.minutes || 0);
+        } else {
+          durationA = parseInt(a.average_duration) || 0;
+        }
+        if (typeof b.average_duration === 'object') {
+          durationB = (b.average_duration.hours || 0) * 60 + (b.average_duration.minutes || 0);
+        } else {
+          durationB = parseInt(b.average_duration) || 0;
+        }
         return durationB - durationA;
       case "efficiency":
         return calculateEfficiency(b) - calculateEfficiency(a);
@@ -119,13 +136,13 @@ export default function Routes() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} p-6`}>
       {/* Header */}
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Route Management</h1>
-            <p className="text-gray-600 mt-1">Monitor and manage bus routes across the network</p>
+            <h1 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Route Management</h1>
+            <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} mt-1`}>Monitor and manage bus routes across the network</p>
           </div>
           <button className="inline-flex items-center px-4 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
             <Plus className="h-5 w-5 mr-2" />
@@ -135,56 +152,56 @@ export default function Routes() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+          <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-xl p-4 shadow-sm border`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Total Routes</p>
-                <p className="text-2xl font-bold text-gray-900">{routes.length}</p>
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Total Routes</p>
+                <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{routes.length}</p>
               </div>
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Route className="h-6 w-6 text-blue-600" />
+              <div className={`p-2 ${darkMode ? 'bg-blue-900' : 'bg-blue-100'} rounded-lg`}>
+                <Route className={`h-6 w-6 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
               </div>
             </div>
           </div>
-          
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+
+          <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-xl p-4 shadow-sm border`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Avg. Distance</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Avg. Distance</p>
+                <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                   {Math.round(routes.reduce((sum, r) => sum + (r.total_distance || 0), 0) / routes.length)} km
                 </p>
               </div>
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Navigation className="h-6 w-6 text-green-600" />
+              <div className={`p-2 ${darkMode ? 'bg-green-900' : 'bg-green-100'} rounded-lg`}>
+                <Navigation className={`h-6 w-6 ${darkMode ? 'text-green-400' : 'text-green-600'}`} />
               </div>
             </div>
           </div>
-          
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+
+          <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-xl p-4 shadow-sm border`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Active Today</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Active Today</p>
+                <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                   {Math.round(routes.length * 0.85)}
                 </p>
               </div>
-              <div className="p-2 bg-amber-100 rounded-lg">
-                <CheckCircle className="h-6 w-6 text-amber-600" />
+              <div className={`p-2 ${darkMode ? 'bg-amber-900' : 'bg-amber-100'} rounded-lg`}>
+                <CheckCircle className={`h-6 w-6 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`} />
               </div>
             </div>
           </div>
-          
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+
+          <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-xl p-4 shadow-sm border`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Avg. Efficiency</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Avg. Efficiency</p>
+                <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                   {Math.round(routes.reduce((sum, r) => sum + calculateEfficiency(r), 0) / routes.length)}%
                 </p>
               </div>
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <TrendingUp className="h-6 w-6 text-purple-600" />
+              <div className={`p-2 ${darkMode ? 'bg-purple-900' : 'bg-purple-100'} rounded-lg`}>
+                <TrendingUp className={`h-6 w-6 ${darkMode ? 'text-purple-400' : 'text-purple-600'}`} />
               </div>
             </div>
           </div>
@@ -206,7 +223,7 @@ export default function Routes() {
               />
             </div>
           </div>
-          
+
           <div className="flex gap-3">
             <div className="relative">
               <select
@@ -220,7 +237,7 @@ export default function Routes() {
               </select>
               <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
             </div>
-            
+
             <div className="flex items-center bg-gray-100 rounded-lg p-1">
               <button
                 onClick={() => setViewMode("grid")}
@@ -235,7 +252,7 @@ export default function Routes() {
                 List
               </button>
             </div>
-            
+
             <button
               onClick={() => fetchRoutes()}
               className="inline-flex items-center px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
@@ -243,7 +260,7 @@ export default function Routes() {
               <RefreshCw className="h-5 w-5 mr-2 text-gray-600" />
               Refresh
             </button>
-            
+
             <button
               onClick={() => console.log("Export routes")}
               className="inline-flex items-center px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
@@ -294,7 +311,7 @@ export default function Routes() {
                         <p className="text-sm font-medium text-gray-900">{route.start_point}</p>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center">
                       <MapPin className="h-4 w-4 text-red-600 mr-2" />
                       <div className="flex-1">
@@ -310,7 +327,11 @@ export default function Routes() {
                       </div>
                       <div>
                         <p className="text-xs text-gray-500">Duration</p>
-                        <p className="text-sm font-semibold text-gray-900">{route.average_duration}</p>
+                        <p className="text-sm font-semibold text-gray-900">
+                          {typeof route.average_duration === 'object'
+                            ? `${route.average_duration.hours || 0}h ${route.average_duration.minutes || 0}m`
+                            : route.average_duration}
+                        </p>
                       </div>
                     </div>
 
@@ -322,7 +343,7 @@ export default function Routes() {
                         </span>
                       </div>
                       <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
-                        <div 
+                        <div
                           className={`h-full ${efficiency >= 70 ? 'bg-green-500' : efficiency >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
                           style={{ width: `${efficiency}%` }}
                         />
@@ -412,7 +433,9 @@ export default function Routes() {
                         <div className="flex items-center">
                           <Clock className="h-4 w-4 text-gray-400 mr-2" />
                           <span className="text-sm font-medium text-gray-900">
-                            {route.average_duration}
+                            {typeof route.average_duration === 'object'
+                              ? `${route.average_duration.hours || 0}h ${route.average_duration.minutes || 0}m`
+                              : route.average_duration}
                           </span>
                         </div>
                       </td>
@@ -426,7 +449,7 @@ export default function Routes() {
                               </span>
                             </div>
                             <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
-                              <div 
+                              <div
                                 className={`h-full ${efficiency >= 70 ? 'bg-green-500' : efficiency >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
                                 style={{ width: `${efficiency}%` }}
                               />
@@ -486,7 +509,7 @@ export default function Routes() {
                   >
                     <ChevronLeft className="h-5 w-5" />
                   </button>
-                  
+
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                     let pageNum;
                     if (totalPages <= 5) {
@@ -498,22 +521,21 @@ export default function Routes() {
                     } else {
                       pageNum = currentPage - 2 + i;
                     }
-                    
+
                     return (
                       <button
                         key={pageNum}
                         onClick={() => setCurrentPage(pageNum)}
-                        className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
-                          currentPage === pageNum
-                            ? 'bg-blue-600 text-white'
-                            : 'text-gray-600 hover:bg-gray-100'
-                        }`}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium ${currentPage === pageNum
+                          ? 'bg-blue-600 text-white'
+                          : 'text-gray-600 hover:bg-gray-100'
+                          }`}
                       >
                         {pageNum}
                       </button>
                     );
                   })}
-                  
+
                   <button
                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                     disabled={currentPage === totalPages}

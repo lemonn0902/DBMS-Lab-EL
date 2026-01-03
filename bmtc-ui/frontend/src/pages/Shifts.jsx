@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
+import { useTheme } from "../contexts/ThemeContext.jsx";
 import {
   Search,
   Filter,
@@ -24,12 +25,23 @@ import {
 } from "lucide-react";
 
 export default function Shifts() {
+  const { darkMode } = useTheme();
   const [shifts, setShifts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [sortBy, setSortBy] = useState("time");
   const [currentPage, setCurrentPage] = useState(1);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [formData, setFormData] = useState({
+    driver_id: "",
+    conductor_id: "",
+    bus_id: "",
+    route_id: "",
+    start_time: "",
+    end_time: "",
+    shift_date: ""
+  });
   const shiftsPerPage = 8;
 
   useEffect(() => {
@@ -51,7 +63,7 @@ export default function Shifts() {
   // Function to extract time from datetime string
   const formatTime = (timeString) => {
     if (!timeString) return "N/A";
-    
+
     // If it's already just time (HH:MM:SS format)
     if (timeString.includes(':') && !timeString.includes('T')) {
       const parts = timeString.split(':');
@@ -63,7 +75,7 @@ export default function Shifts() {
         return `${displayHours}:${minutes} ${ampm}`;
       }
     }
-    
+
     // Try to parse as Date object
     try {
       const date = new Date(timeString);
@@ -73,7 +85,7 @@ export default function Shifts() {
     } catch (e) {
       console.error("Error parsing time:", e);
     }
-    
+
     // Return as is if no parsing worked
     return timeString;
   };
@@ -81,10 +93,10 @@ export default function Shifts() {
   // Get shift timing category (Morning/Afternoon/Evening/Night)
   const getShiftTiming = (startTime) => {
     if (!startTime) return "Unknown";
-    
+
     try {
       let hour;
-      
+
       // Parse hour from time string
       if (startTime.includes(':')) {
         const parts = startTime.split(':');
@@ -93,7 +105,7 @@ export default function Shifts() {
         const date = new Date(startTime);
         hour = date.getHours();
       }
-      
+
       if (hour >= 4 && hour < 12) return "Morning";
       if (hour >= 12 && hour < 17) return "Afternoon";
       if (hour >= 17 && hour < 21) return "Evening";
@@ -106,11 +118,11 @@ export default function Shifts() {
   // Get shift status based on current time
   const getShiftStatus = (startTime, endTime) => {
     const now = new Date();
-    
+
     try {
       // Create date objects for comparison
       const today = new Date().toDateString();
-      
+
       // Parse start time
       let startDate = new Date(startTime);
       if (isNaN(startDate.getTime())) {
@@ -119,27 +131,27 @@ export default function Shifts() {
         startDate = new Date();
         startDate.setHours(parseInt(hours), parseInt(minutes || 0), 0);
       }
-      
+
       // Parse end time
       let endDate = new Date(endTime);
       if (isNaN(endDate.getTime())) {
         const [hours, minutes] = endTime.split(':');
         endDate = new Date();
         endDate.setHours(parseInt(hours), parseInt(minutes || 0), 0);
-        
+
         // If end time is before start time (overnight shift), add a day
         if (endDate < startDate) {
           endDate.setDate(endDate.getDate() + 1);
         }
       }
-      
+
       if (now < startDate) return "upcoming";
       if (now >= startDate && now <= endDate) return "active";
       if (now > endDate) return "completed";
     } catch (error) {
       console.error("Error determining shift status:", error);
     }
-    
+
     return "unknown";
   };
 
@@ -151,9 +163,9 @@ export default function Shifts() {
       cancelled: { color: "bg-red-100 text-red-800", icon: XCircle, label: "Cancelled" },
       unknown: { color: "bg-gray-100 text-gray-800", icon: AlertCircle, label: "Unknown" }
     };
-    
+
     const { color, icon: Icon, label } = config[status] || config.unknown;
-    
+
     return (
       <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${color}`}>
         <Icon className="w-3 h-3 mr-1" />
@@ -163,15 +175,15 @@ export default function Shifts() {
   };
 
   const filteredShifts = shifts.filter(shift => {
-    const matchesSearch = 
+    const matchesSearch =
       shift.Driver?.name?.toLowerCase().includes(search.toLowerCase()) ||
       shift.Conductor?.name?.toLowerCase().includes(search.toLowerCase()) ||
       shift.Bus?.registration_no?.toLowerCase().includes(search.toLowerCase()) ||
       shift.Route?.start_point?.toLowerCase().includes(search.toLowerCase()) ||
       shift.Route?.end_point?.toLowerCase().includes(search.toLowerCase());
-    
+
     if (filter === "all") return matchesSearch;
-    
+
     const status = getShiftStatus(shift.start_time, shift.end_time);
     return matchesSearch && status === filter;
   });
@@ -216,6 +228,43 @@ export default function Shifts() {
     console.log("Assign resources to shift:", shift);
   };
 
+  const handleAddShift = () => {
+    setShowAddModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowAddModal(false);
+    setFormData({
+      driver_id: "",
+      conductor_id: "",
+      bus_id: "",
+      route_id: "",
+      start_time: "",
+      end_time: "",
+      shift_date: ""
+    });
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await api.post("/shifts", formData);
+      setShifts(prev => [...prev, res.data]);
+      handleCloseModal();
+      console.log("Shift added successfully:", res.data);
+    } catch (error) {
+      console.error("Error adding shift:", error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -228,15 +277,18 @@ export default function Shifts() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} p-6`}>
       {/* Header */}
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Shift Management</h1>
-            <p className="text-gray-600 mt-1">Schedule and monitor driver shifts</p>
+            <h1 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Shift Management</h1>
+            <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} mt-1`}>Schedule and monitor driver shifts</p>
           </div>
-          <button className="inline-flex items-center px-4 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+          <button
+            onClick={handleAddShift}
+            className="inline-flex items-center px-4 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+          >
             <Plus className="h-5 w-5 mr-2" />
             Create New Shift
           </button>
@@ -244,58 +296,58 @@ export default function Shifts() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+          <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-xl p-4 shadow-sm border`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Active Shifts</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Active Shifts</p>
+                <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                   {shifts.filter(s => getShiftStatus(s.start_time, s.end_time) === "active").length}
                 </p>
               </div>
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Clock className="h-6 w-6 text-green-600" />
+              <div className={`p-2 ${darkMode ? 'bg-green-900' : 'bg-green-100'} rounded-lg`}>
+                <Clock className={`h-6 w-6 ${darkMode ? 'text-green-400' : 'text-green-600'}`} />
               </div>
             </div>
           </div>
-          
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+
+          <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-xl p-4 shadow-sm border`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Scheduled Today</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Scheduled Today</p>
+                <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                   {shifts.length} {/* Since we don't have date info, show total */}
                 </p>
               </div>
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Calendar className="h-6 w-6 text-blue-600" />
+              <div className={`p-2 ${darkMode ? 'bg-blue-900' : 'bg-blue-100'} rounded-lg`}>
+                <Calendar className={`h-6 w-6 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
               </div>
             </div>
           </div>
-          
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+
+          <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-xl p-4 shadow-sm border`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Drivers on Duty</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Drivers on Duty</p>
+                <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                   {new Set(shifts.filter(s => getShiftStatus(s.start_time, s.end_time) === "active").map(s => s.driver_id)).size}
                 </p>
               </div>
-              <div className="p-2 bg-amber-100 rounded-lg">
-                <Users className="h-6 w-6 text-amber-600" />
+              <div className={`p-2 ${darkMode ? 'bg-amber-900' : 'bg-amber-100'} rounded-lg`}>
+                <Users className={`h-6 w-6 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`} />
               </div>
             </div>
           </div>
-          
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+
+          <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-xl p-4 shadow-sm border`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Buses in Service</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Buses in Service</p>
+                <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                   {new Set(shifts.filter(s => getShiftStatus(s.start_time, s.end_time) === "active").map(s => s.bus_id)).size}
                 </p>
               </div>
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Bus className="h-6 w-6 text-purple-600" />
+              <div className={`p-2 ${darkMode ? 'bg-purple-900' : 'bg-purple-100'} rounded-lg`}>
+                <Bus className={`h-6 w-6 ${darkMode ? 'text-purple-400' : 'text-purple-600'}`} />
               </div>
             </div>
           </div>
@@ -303,62 +355,62 @@ export default function Shifts() {
       </div>
 
       {/* Filters and Controls */}
-      <div className="bg-white rounded-xl p-4 mb-6 shadow-sm border border-gray-100">
+      <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-xl p-4 mb-6 shadow-sm border`}>
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-400' : 'text-gray-400'} h-5 w-5`} />
               <input
                 type="text"
                 placeholder="Search shifts by driver, conductor, bus, or route..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                className={`w-full pl-10 pr-4 py-2.5 border ${darkMode ? 'border-gray-600 bg-gray-700 text-white focus:ring-blue-500 focus:border-blue-500' : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'} rounded-lg outline-none`}
               />
             </div>
           </div>
-          
+
           <div className="flex gap-3">
             <div className="relative">
               <select
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
-                className="appearance-none pl-10 pr-8 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+                className={`appearance-none pl-10 pr-8 py-2.5 border ${darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none`}
               >
                 <option value="all">All Shifts</option>
                 <option value="active">Active</option>
                 <option value="upcoming">Upcoming</option>
                 <option value="completed">Completed</option>
               </select>
-              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Filter className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-400' : 'text-gray-400'} h-5 w-5`} />
             </div>
-            
+
             <div className="relative">
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="appearance-none pl-10 pr-8 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+                className={`appearance-none pl-10 pr-8 py-2.5 border ${darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none`}
               >
                 <option value="time">Sort by Time</option>
                 <option value="driver">Sort by Driver</option>
                 <option value="route">Sort by Route</option>
               </select>
-              <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Clock className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-400' : 'text-gray-400'} h-5 w-5`} />
             </div>
-            
+
             <button
               onClick={fetchShifts}
-              className="inline-flex items-center px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              className={`inline-flex items-center px-4 py-2.5 border ${darkMode ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-50'} rounded-lg transition-colors`}
             >
-              <RefreshCw className="h-5 w-5 mr-2 text-gray-600" />
+              <RefreshCw className={`h-5 w-5 mr-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`} />
               Refresh
             </button>
-            
+
             <button
               onClick={() => console.log("Export shifts")}
-              className="inline-flex items-center px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              className={`inline-flex items-center px-4 py-2.5 border ${darkMode ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-50'} rounded-lg transition-colors`}
             >
-              <Download className="h-5 w-5 mr-2 text-gray-600" />
+              <Download className={`h-5 w-5 mr-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`} />
               Export
             </button>
           </div>
@@ -366,38 +418,38 @@ export default function Shifts() {
       </div>
 
       {/* Shifts Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-xl shadow-sm border overflow-hidden`}>
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className={`${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'} border-b`}>
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className={`px-6 py-4 text-left text-xs font-semibold ${darkMode ? 'text-gray-300' : 'text-gray-700'} uppercase tracking-wider`}>
                   Shift Details
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className={`px-6 py-4 text-left text-xs font-semibold ${darkMode ? 'text-gray-300' : 'text-gray-700'} uppercase tracking-wider`}>
                   Personnel
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className={`px-6 py-4 text-left text-xs font-semibold ${darkMode ? 'text-gray-300' : 'text-gray-700'} uppercase tracking-wider`}>
                   Vehicle & Route
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className={`px-6 py-4 text-left text-xs font-semibold ${darkMode ? 'text-gray-300' : 'text-gray-700'} uppercase tracking-wider`}>
                   Timing
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className={`px-6 py-4 text-left text-xs font-semibold ${darkMode ? 'text-gray-300' : 'text-gray-700'} uppercase tracking-wider`}>
                   Status
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className={`px-6 py-4 text-left text-xs font-semibold ${darkMode ? 'text-gray-300' : 'text-gray-700'} uppercase tracking-wider`}>
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className={`${darkMode ? 'divide-gray-700' : 'divide-gray-200'} divide-y`}>
               {currentShifts.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="px-6 py-12 text-center">
-                    <div className="text-gray-400">
+                    <div className={`${darkMode ? 'text-gray-400' : 'text-gray-400'}`}>
                       <Clock className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                      <p className="text-lg">No shifts found</p>
+                      <p className={`text-lg ${darkMode ? 'text-gray-300' : ''}`}>No shifts found</p>
                       {search && (
                         <p className="text-sm mt-1">Try adjusting your search criteria</p>
                       )}
@@ -408,106 +460,105 @@ export default function Shifts() {
                 currentShifts.map((shift) => {
                   const status = getShiftStatus(shift.start_time, shift.end_time);
                   const timingCategory = getShiftTiming(shift.start_time);
-                  
+
                   return (
-                    <tr key={shift.shift_id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={shift.shift_id} className={`${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} transition-colors`}>
                       <td className="px-6 py-4">
                         <div className="flex items-center">
-                          <div className="h-10 w-10 flex-shrink-0 rounded-lg bg-blue-100 flex items-center justify-center">
-                            <Clock className="h-5 w-5 text-blue-600" />
+                          <div className={`h-10 w-10 flex-shrink-0 rounded-lg ${darkMode ? 'bg-blue-900' : 'bg-blue-100'} flex items-center justify-center`}>
+                            <Clock className={`h-5 w-5 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                               Shift #{shift.shift_id}
                             </div>
-                            <div className="text-xs text-gray-500 mt-0.5">
+                            <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} mt-0.5`}>
                               ID: {shift.shift_id}
                             </div>
                           </div>
                         </div>
                       </td>
-                      
+
                       <td className="px-6 py-4">
                         <div className="space-y-2">
                           <div className="flex items-center">
-                            <User className="h-3 w-3 text-gray-400 mr-2" />
+                            <User className={`h-3 w-3 ${darkMode ? 'text-gray-400' : 'text-gray-400'} mr-2`} />
                             <div>
-                              <p className="text-xs text-gray-500">Driver</p>
-                              <p className="text-sm font-medium text-gray-900">
+                              <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Driver</p>
+                              <p className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                                 {shift.Driver?.name || "Unassigned"}
                               </p>
                             </div>
                           </div>
                           <div className="flex items-center">
-                            <Users className="h-3 w-3 text-gray-400 mr-2" />
+                            <Users className={`h-3 w-3 ${darkMode ? 'text-gray-400' : 'text-gray-400'} mr-2`} />
                             <div>
-                              <p className="text-xs text-gray-500">Conductor</p>
-                              <p className="text-sm font-medium text-gray-900">
+                              <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Conductor</p>
+                              <p className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                                 {shift.Conductor?.name || "Unassigned"}
                               </p>
                             </div>
                           </div>
                         </div>
                       </td>
-                      
+
                       <td className="px-6 py-4">
                         <div className="space-y-2">
                           <div className="flex items-center">
-                            <Bus className="h-3 w-3 text-gray-400 mr-2" />
+                            <Bus className={`h-3 w-3 ${darkMode ? 'text-gray-400' : 'text-gray-400'} mr-2`} />
                             <div>
-                              <p className="text-xs text-gray-500">Bus</p>
-                              <p className="text-sm font-medium text-gray-900 font-mono">
+                              <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Bus</p>
+                              <p className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'} font-mono`}>
                                 {shift.Bus?.registration_no || "N/A"}
                               </p>
                             </div>
                           </div>
                           <div className="flex items-center">
-                            <Route className="h-3 w-3 text-gray-400 mr-2" />
+                            <Route className={`h-3 w-3 ${darkMode ? 'text-gray-400' : 'text-gray-400'} mr-2`} />
                             <div>
-                              <p className="text-xs text-gray-500">Route</p>
-                              <p className="text-sm font-medium text-gray-900">
+                              <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Route</p>
+                              <p className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                                 {shift.Route ? `${shift.Route.start_point} → ${shift.Route.end_point}` : "N/A"}
                               </p>
                             </div>
                           </div>
                         </div>
                       </td>
-                      
+
                       <td className="px-6 py-4">
                         <div className="space-y-2">
                           <div>
-                            <p className="text-xs text-gray-500">Schedule</p>
-                            <p className="text-sm font-medium text-gray-900">
+                            <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Schedule</p>
+                            <p className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                               {formatTime(shift.start_time)} - {formatTime(shift.end_time)}
                             </p>
                           </div>
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                            timingCategory === "Morning" ? "bg-amber-100 text-amber-800" :
-                            timingCategory === "Afternoon" ? "bg-orange-100 text-orange-800" :
-                            timingCategory === "Evening" ? "bg-purple-100 text-purple-800" :
-                            "bg-blue-100 text-blue-800"
-                          }`}>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${timingCategory === "Morning" ? (darkMode ? "bg-amber-900 text-amber-300" : "bg-amber-100 text-amber-800") :
+                            timingCategory === "Afternoon" ? (darkMode ? "bg-orange-900 text-orange-300" : "bg-orange-100 text-orange-800") :
+                              timingCategory === "Evening" ? (darkMode ? "bg-purple-900 text-purple-300" : "bg-purple-100 text-purple-800") :
+                                (darkMode ? "bg-blue-900 text-blue-300" : "bg-blue-100 text-blue-800")
+                            }`}>
                             {timingCategory}
                           </span>
                         </div>
                       </td>
-                      
+
                       <td className="px-6 py-4">
                         {getStatusBadge(status)}
                       </td>
-                      
+
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-2">
                           <button
                             onClick={() => handleView(shift)}
-                            className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            className={`p-1.5 ${darkMode ? 'text-gray-400 hover:text-blue-400 hover:bg-blue-900' : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'} rounded-lg transition-colors`}
                             title="View details"
                           >
                             <Eye className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => handleEdit(shift)}
-                            className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                            className={`p-1.5 ${darkMode ? 'text-gray-400 hover:text-green-400 hover:bg-green-900' : 'text-gray-400 hover:text-green-600 hover:bg-green-50'} rounded-lg transition-colors`}
                             title="Edit shift"
                           >
                             <Edit2 className="h-4 w-4" />
@@ -515,13 +566,13 @@ export default function Shifts() {
                           {status === "upcoming" && (
                             <button
                               onClick={() => handleAssign(shift)}
-                              className="p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                              className={`p-1.5 ${darkMode ? 'text-gray-400 hover:text-amber-400 hover:bg-amber-900' : 'text-gray-400 hover:text-amber-600 hover:bg-amber-50'} rounded-lg transition-colors`}
                               title="Assign resources"
                             >
                               <Shield className="h-4 w-4" />
                             </button>
                           )}
-                          <button className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                          <button className={`p-1.5 ${darkMode ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-700' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'} rounded-lg transition-colors`}>
                             <MoreVertical className="h-4 w-4" />
                           </button>
                         </div>
@@ -536,9 +587,9 @@ export default function Shifts() {
 
         {/* Pagination */}
         {sortedShifts.length > shiftsPerPage && (
-          <div className="px-6 py-4 border-t border-gray-200">
+          <div className={`px-6 py-4 ${darkMode ? 'border-gray-700' : 'border-t border-gray-200'}`}>
             <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-700">
+              <div className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 Showing <span className="font-medium">{indexOfFirstShift + 1}</span> to{" "}
                 <span className="font-medium">{Math.min(indexOfLastShift, sortedShifts.length)}</span>{" "}
                 of <span className="font-medium">{sortedShifts.length}</span> shifts
@@ -547,11 +598,11 @@ export default function Shifts() {
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
-                  className={`p-2 rounded-lg ${currentPage === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100'}`}
+                  className={`p-2 rounded-lg ${currentPage === 1 ? (darkMode ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 cursor-not-allowed') : (darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100')}`}
                 >
                   <ChevronLeft className="h-5 w-5" />
                 </button>
-                
+
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                   let pageNum;
                   if (totalPages <= 5) {
@@ -563,26 +614,25 @@ export default function Shifts() {
                   } else {
                     pageNum = currentPage - 2 + i;
                   }
-                  
+
                   return (
                     <button
                       key={pageNum}
                       onClick={() => setCurrentPage(pageNum)}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
-                        currentPage === pageNum
-                          ? 'bg-blue-600 text-white'
-                          : 'text-gray-600 hover:bg-gray-100'
-                      }`}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium ${currentPage === pageNum
+                        ? 'bg-blue-600 text-white'
+                        : darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100'
+                        }`}
                     >
                       {pageNum}
                     </button>
                   );
                 })}
-                
+
                 <button
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}
-                  className={`p-2 rounded-lg ${currentPage === totalPages ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100'}`}
+                  className={`p-2 rounded-lg ${currentPage === totalPages ? (darkMode ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 cursor-not-allowed') : (darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100')}`}
                 >
                   <ChevronRight className="h-5 w-5" />
                 </button>
@@ -591,6 +641,141 @@ export default function Shifts() {
           </div>
         )}
       </div>
+
+      {/* Add Shift Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className={`relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-lg ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'}`}>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Create New Shift</h3>
+              <button
+                onClick={handleCloseModal}
+                className={`${darkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                <XCircle className="h-6 w-6" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                  Driver ID
+                </label>
+                <input
+                  type="text"
+                  name="driver_id"
+                  value={formData.driver_id}
+                  onChange={handleInputChange}
+                  className={`w-full px-3 py-2 border ${darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none`}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                  Conductor ID
+                </label>
+                <input
+                  type="text"
+                  name="conductor_id"
+                  value={formData.conductor_id}
+                  onChange={handleInputChange}
+                  className={`w-full px-3 py-2 border ${darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none`}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                  Bus ID
+                </label>
+                <input
+                  type="text"
+                  name="bus_id"
+                  value={formData.bus_id}
+                  onChange={handleInputChange}
+                  className={`w-full px-3 py-2 border ${darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none`}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                  Route ID
+                </label>
+                <input
+                  type="text"
+                  name="route_id"
+                  value={formData.route_id}
+                  onChange={handleInputChange}
+                  className={`w-full px-3 py-2 border ${darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none`}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                  Shift Date
+                </label>
+                <input
+                  type="date"
+                  name="shift_date"
+                  value={formData.shift_date}
+                  onChange={handleInputChange}
+                  className={`w-full px-3 py-2 border ${darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none`}
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                    Start Time
+                  </label>
+                  <input
+                    type="time"
+                    name="start_time"
+                    value={formData.start_time}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border ${darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none`}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                    End Time
+                  </label>
+                  <input
+                    type="time"
+                    name="end_time"
+                    value={formData.end_time}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border ${darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none`}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="submit"
+                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                >
+                  Create Shift
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCloseModal}
+                  className={`flex-1 ${darkMode ? 'bg-gray-600 text-gray-200 hover:bg-gray-500' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'} py-2 px-4 rounded-lg transition-colors font-medium`}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

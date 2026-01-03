@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import api from "../services/api"; // ← YOUR ACTUAL API SERVICE
+import api from "../services/api";
 import {
   FileText,
   Bus,
@@ -100,9 +100,8 @@ export default function Reports() {
               setActiveTab(id);
               setDrillDownData(null);
             }}
-            className={`flex items-center gap-2 px-4 py-2 rounded transition ${
-              activeTab === id ? "bg-blue-600 text-white" : "bg-white hover:bg-slate-50"
-            }`}
+            className={`flex items-center gap-2 px-4 py-2 rounded transition ${activeTab === id ? "bg-blue-600 text-white" : "bg-white hover:bg-slate-50"
+              }`}
           >
             <Icon size={18} />
             {label}
@@ -118,15 +117,15 @@ export default function Reports() {
       )}
 
       {!loading && activeTab === "summary" && reports.summary && (
-        <SummaryReport 
-          data={reports.summary} 
-          onExport={() => exportJSON("summary")} 
+        <SummaryReport
+          data={reports.summary}
+          onExport={() => exportJSON("summary")}
         />
       )}
 
       {!loading && activeTab === "busUsage" && reports.busUsage && (
-        <BusUsageReport 
-          data={reports.busUsage} 
+        <BusUsageReport
+          data={reports.busUsage}
           onExport={() => exportJSON("busUsage")}
           drillDownData={drillDownData}
           setDrillDownData={setDrillDownData}
@@ -134,8 +133,8 @@ export default function Reports() {
       )}
 
       {!loading && activeTab === "complaints" && reports.complaints && (
-        <ComplaintsReport 
-          data={reports.complaints} 
+        <ComplaintsReport
+          data={reports.complaints}
           onExport={() => exportJSON("complaints")}
           drillDownData={drillDownData}
           setDrillDownData={setDrillDownData}
@@ -143,9 +142,9 @@ export default function Reports() {
       )}
 
       {!loading && activeTab === "shiftCompliance" && reports.shiftCompliance && (
-        <ShiftComplianceReport 
-          data={reports.shiftCompliance} 
-          onExport={() => exportJSON("shiftCompliance")} 
+        <ShiftComplianceReport
+          data={reports.shiftCompliance}
+          onExport={() => exportJSON("shiftCompliance")}
         />
       )}
     </div>
@@ -158,7 +157,7 @@ function SummaryReport({ data, onExport }) {
     <div className="space-y-6">
       <div className="bg-white p-6 rounded shadow">
         <Header title="Summary Report" onExport={onExport} />
-        
+
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <KPICard
@@ -326,7 +325,7 @@ function ComplaintsReport({ data, onExport, drillDownData, setDrillDownData }) {
     ([month, count]) => ({ month, count })
   );
 
-  const resolutionRate = data.summary.total 
+  const resolutionRate = data.summary.total
     ? Math.round((data.summary.resolved / data.summary.total) * 100)
     : 0;
 
@@ -437,12 +436,12 @@ function ComplaintsReport({ data, onExport, drillDownData, setDrillDownData }) {
 /* -------------------- SHIFT COMPLIANCE -------------------- */
 function ShiftComplianceReport({ data, onExport }) {
   const complianceRate = parseFloat(data.summary.complianceRate);
-  
+
   return (
     <div className="space-y-6">
       <div className="bg-white p-6 rounded shadow">
         <Header title="Shift Compliance Report" onExport={onExport} />
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <KPICard
             title="Compliance Rate"
@@ -502,9 +501,8 @@ function KPICard({ title, value, icon: Icon, color = "blue", trend, onClick }) {
   return (
     <div
       onClick={onClick}
-      className={`bg-white p-4 rounded shadow transition ${
-        onClick ? "cursor-pointer hover:scale-[1.02] hover:shadow-lg" : ""
-      }`}
+      className={`bg-white p-4 rounded shadow transition ${onClick ? "cursor-pointer hover:scale-[1.02] hover:shadow-lg" : ""
+        }`}
     >
       <div className="flex justify-between items-start mb-2">
         <p className="text-sm text-gray-600 font-medium">{title}</p>
