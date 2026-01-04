@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { LogIn, Mail, Lock, Loader2 } from "lucide-react";
 
 export default function Login() {
+  const [loginType, setLoginType] = useState("admin"); // "admin" or "user"
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -17,25 +18,27 @@ export default function Login() {
 
     setIsLoading(true);
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/login", { 
+      const endpoint = loginType === "admin" 
+        ? "http://localhost:5000/api/auth/login"
+        : "http://localhost:5000/api/auth/user/login";
+
+      const res = await axios.post(endpoint, { 
         email, 
         password 
       });
 
-      // 1. Store the token for the ProtectedRoute
+      // Store the token for the ProtectedRoute
       localStorage.setItem("token", res.data.token);
 
-      // 2. Store user info for the Sidebar display
-      // Assuming your backend returns user: { name: "...", role: "..." }
+      // Store user info for the Sidebar display
       const userPayload = {
-        name: res.data.user?.name || "Admin User",
-        role: res.data.user?.role || "System Administrator",
+        name: res.data.user?.name || (loginType === "admin" ? "Admin User" : "User"),
+        role: res.data.user?.role || loginType,
         email: email
       };
       localStorage.setItem("user", JSON.stringify(userPayload));
 
-      // 3. Navigate to root (which renders Dashboard)
-      // Using window.location.href forces a clean state reload for the App
+      // Navigate to root (which renders Dashboard)
       window.location.href = "/"; 
       
     } catch (err) {
@@ -53,8 +56,40 @@ export default function Login() {
           <div className="mx-auto h-14 w-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center shadow-lg transform -rotate-6">
             <LogIn className="h-7 w-7" />
           </div>
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900 tracking-tight">BMTC Admin</h2>
-          <p className="mt-2 text-sm text-gray-500">Sign in to manage fleet and operations</p>
+          <h2 className="mt-6 text-3xl font-extrabold text-gray-900 tracking-tight">BMTC</h2>
+          <p className="mt-2 text-sm text-gray-500">Fleet Management System</p>
+        </div>
+
+        {/* Login Type Tabs */}
+        <div className="flex gap-2 bg-gray-100 p-1 rounded-lg">
+          <button
+            onClick={() => {
+              setLoginType("admin");
+              setEmail("");
+              setPassword("");
+            }}
+            className={`flex-1 py-2 px-4 rounded-md font-semibold text-sm transition-all ${
+              loginType === "admin"
+                ? "bg-blue-600 text-white shadow-md"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            Admin Login
+          </button>
+          <button
+            onClick={() => {
+              setLoginType("user");
+              setEmail("");
+              setPassword("");
+            }}
+            className={`flex-1 py-2 px-4 rounded-md font-semibold text-sm transition-all ${
+              loginType === "user"
+                ? "bg-blue-600 text-white shadow-md"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            User Login
+          </button>
         </div>
 
         <div className="mt-8 space-y-5">
@@ -67,7 +102,8 @@ export default function Login() {
                   type="email"
                   required
                   className="appearance-none rounded-xl relative block w-full px-10 py-3.5 border border-gray-200 placeholder-gray-400 text-gray-900 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all sm:text-sm"
-                  placeholder="admin@bmtc.com"
+                  placeholder={loginType === "admin" ? "admin@bmtc.com" : "user@example.com"}
+                  value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
@@ -82,6 +118,7 @@ export default function Login() {
                   required
                   className="appearance-none rounded-xl relative block w-full px-10 py-3.5 border border-gray-200 placeholder-gray-400 text-gray-900 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all sm:text-sm"
                   placeholder="••••••••"
+                  value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && login()}
                 />
@@ -97,14 +134,14 @@ export default function Login() {
             {isLoading ? (
               <Loader2 className="h-5 w-5 animate-spin" />
             ) : (
-              "Sign In to Dashboard"
+              `Sign In as ${loginType === "admin" ? "Admin" : "User"}`
             )}
           </button>
 
           <div className="text-center pt-2">
             <p className="text-sm text-gray-500">
               New to the system?{" "}
-              <Link to="/signup" className="font-semibold text-blue-600 hover:text-blue-500 transition-colors">
+              <Link to={loginType === "admin" ? "/signup" : "/user-signup"} className="font-semibold text-blue-600 hover:text-blue-500 transition-colors">
                 Create an account
               </Link>
             </p>

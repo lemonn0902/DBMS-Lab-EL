@@ -6,6 +6,7 @@ import AddDriver from "./pages/AddDriver.jsx";
 import Buses from "./pages/Buses.jsx";
 import AddBus from "./pages/AddBus.jsx";
 import RoutesPage from "./pages/Routes.jsx";
+import AddRoute from "./pages/AddRoute.jsx";
 import Shifts from "./pages/Shifts.jsx";
 import Complaints from "./pages/Complaints.jsx";
 import AddComplaint from "./pages/AddComplaint.jsx";
@@ -15,6 +16,7 @@ import AddConductor from "./pages/AddConductor.jsx";
 import Conductors from "./pages/Conductors.jsx";
 import Login from "./pages/Login.jsx";
 import Signup from "./pages/Signup.jsx";
+import UserSignup from "./pages/UserSignup.jsx";
 import { ThemeProvider, useTheme } from "./contexts/ThemeContext.jsx";
 import {
   LayoutDashboard,
@@ -57,7 +59,7 @@ function ProtectedRoute({ children }) {
 
 function App() {
   const location = useLocation();
-  const isAuthPage = location.pathname === "/login" || location.pathname === "/signup";
+  const isAuthPage = location.pathname === "/login" || location.pathname === "/signup" || location.pathname === "/user-signup";
   const { darkMode, toggleDarkMode } = useTheme();
 
   // Sidebar & Layout State
@@ -119,21 +121,27 @@ function App() {
   };
 
   const navigationItems = [
-    { path: "/", label: "Dashboard", icon: LayoutDashboard },
-    { path: "/drivers", label: "Drivers", icon: Users },
-    { path: "/add-driver", label: "Add Driver", icon: UserPlus },
-    { path: "/conductors", label: "Conductors", icon: UserCog },
-    { path: "/add-conductor", label: "Add Conductor", icon: UserPlus },
-    { path: "/buses", label: "Buses", icon: Bus },
-    { path: "/add-bus", label: "Add Bus", icon: BusFront },
-    { path: "/routes", label: "Routes", icon: RouteIcon },
-    { path: "/shifts", label: "Shifts", icon: Clock },
-    { path: "/complaints", label: "Complaints", icon: FileText },
-    { path: "/add-complaint", label: "Add Complaint", icon: PlusCircle },
-    { path: "/accidents", label: "Accidents", icon: AlertTriangle },
-    { path: "/add-accident", label: "Add Accident", icon: PlusCircle },
-    { path: "/reports", label: "Reports", icon: BarChart3 },
+    { path: "/", label: "Dashboard", icon: LayoutDashboard, roles: ["admin", "user"] },
+    { path: "/drivers", label: "Drivers", icon: Users, roles: ["admin"] },
+    { path: "/add-driver", label: "Add Driver", icon: UserPlus, roles: ["admin"] },
+    { path: "/conductors", label: "Conductors", icon: UserCog, roles: ["admin"] },
+    { path: "/add-conductor", label: "Add Conductor", icon: UserPlus, roles: ["admin"] },
+    { path: "/buses", label: "Buses", icon: Bus, roles: ["admin"] },
+    { path: "/add-bus", label: "Add Bus", icon: BusFront, roles: ["admin"] },
+    { path: "/routes", label: "Routes", icon: RouteIcon, roles: ["admin", "user"] },
+    { path: "/add-route", label: "Add Route", icon: PlusCircle, roles: ["admin"] },
+    { path: "/shifts", label: "Shifts", icon: Clock, roles: ["admin"] },
+    { path: "/complaints", label: "Complaints", icon: FileText, roles: ["admin"] },
+    { path: "/add-complaint", label: "Add Complaint", icon: PlusCircle, roles: ["admin", "user"] },
+    { path: "/accidents", label: "Accidents", icon: AlertTriangle, roles: ["admin"] },
+    { path: "/add-accident", label: "Add Accident", icon: PlusCircle, roles: ["admin", "user"] },
+    { path: "/reports", label: "Reports", icon: BarChart3, roles: ["admin"] },
   ];
+
+  // Filter navigation items based on user role
+  const filteredNavigationItems = navigationItems.filter(item => 
+    item.roles.includes(user.role)
+  );
 
   return (
     <div className={`flex h-screen w-full overflow-hidden font-sans ${darkMode ? 'bg-gray-900' : 'bg-slate-50'}`}>
@@ -192,7 +200,7 @@ function App() {
 
           {/* NAVIGATION */}
           <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-            {navigationItems.map((item) => (
+            {filteredNavigationItems.map((item) => (
               <NavLink
                 key={item.path}
                 to={item.path}
@@ -291,6 +299,7 @@ function App() {
               <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+              <Route path="/user-signup" element={<UserSignup />} />
               <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/drivers" element={<ProtectedRoute><Drivers /></ProtectedRoute>} />
               <Route path="/add-driver" element={<ProtectedRoute><AddDriver /></ProtectedRoute>} />
@@ -299,6 +308,7 @@ function App() {
               <Route path="/buses" element={<ProtectedRoute><Buses /></ProtectedRoute>} />
               <Route path="/add-bus" element={<ProtectedRoute><AddBus /></ProtectedRoute>} />
               <Route path="/routes" element={<ProtectedRoute><RoutesPage /></ProtectedRoute>} />
+              <Route path="/add-route" element={<ProtectedRoute><AddRoute /></ProtectedRoute>} />
               <Route path="/shifts" element={<ProtectedRoute><Shifts /></ProtectedRoute>} />
               <Route path="/complaints" element={<ProtectedRoute><Complaints /></ProtectedRoute>} />
               <Route path="/add-complaint" element={<ProtectedRoute><AddComplaint /></ProtectedRoute>} />
