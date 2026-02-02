@@ -2,8 +2,10 @@ const express = require("express");
 const app = express();
 
 // CORS middleware
+const frontend_url = process.env.FRONTEND_URL || "http://localhost:3000";
+
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Origin", frontend_url);
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   if (req.method === "OPTIONS") {

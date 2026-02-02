@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
-import { useTheme } from "../contexts/ThemeContext.jsx";
+import { useTheme } from "../contexts/ThemeContext.jsx"
 import {
   Bus,
   Users,
@@ -14,9 +14,14 @@ import {
   Activity,
   Route,
   Plus,
+  ArrowUpRight,
+  ArrowDownRight,
+  Zap,
+  Target,
   AlertTriangle,
   ArrowRight
 } from "lucide-react";
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 export default function Dashboard() {
   const { darkMode } = useTheme();
@@ -58,12 +63,29 @@ export default function Dashboard() {
 
   /* ---------------- DATA (ADMIN ONLY) ---------------- */
   const stats = [
-    { label: "Active Buses", value: "118", change: "+2%", icon: Activity },
-    { label: "On-time Performance", value: "94.2%", change: "+1.5%", icon: TrendingUp },
-    { label: "Active Drivers", value: "156", change: "+4%", icon: Users },
-    { label: "Daily Passengers", value: "5.2M", change: "+3.2%", icon: Route },
-    { label: "Avg. Speed", value: "32 km/h", change: "-0.5%", icon: Shield },
-    { label: "Fleet Health", value: "92%", change: "+1.8%", icon: Bus }
+    { label: "Active Buses", value: "118", change: "+2%", icon: Activity, gradient: "from-blue-500 to-blue-600" },
+    { label: "On-time Performance", value: "94.2%", change: "+1.5%", icon: TrendingUp, gradient: "from-green-500 to-green-600" },
+    { label: "Active Drivers", value: "156", change: "+4%", icon: Users, gradient: "from-purple-500 to-purple-600" },
+    { label: "Daily Passengers", value: "5.2M", change: "+3.2%", icon: Route, gradient: "from-orange-500 to-orange-600" },
+    { label: "Avg. Speed", value: "32 km/h", change: "-0.5%", icon: Shield, gradient: "from-red-500 to-red-600" },
+    { label: "Fleet Health", value: "92%", change: "+1.8%", icon: Bus, gradient: "from-cyan-500 to-cyan-600" }
+  ];
+
+  // Chart data
+  const performanceData = [
+    { name: "Mon", performance: 92, target: 95 },
+    { name: "Tue", performance: 94, target: 95 },
+    { name: "Wed", performance: 91, target: 95 },
+    { name: "Thu", performance: 96, target: 95 },
+    { name: "Fri", performance: 95, target: 95 },
+    { name: "Sat", performance: 93, target: 95 },
+    { name: "Sun", performance: 94, target: 95 }
+  ];
+
+  const fleetStatusData = [
+    { name: "Active", value: 118, color: "#10b981" },
+    { name: "In Maintenance", value: 15, color: "#f59e0b" },
+    { name: "Inactive", value: 7, color: "#ef4444" }
   ];
 
   const recentActivity = [
@@ -77,12 +99,12 @@ export default function Dashboard() {
 
   const activityColor = (type) => {
     switch (type) {
-      case "Update": return "bg-blue-100 text-blue-600";
-      case "Complaint": return "bg-red-100 text-red-600";
-      case "Maintenance": return "bg-green-100 text-green-600";
-      case "Report": return "bg-purple-100 text-purple-600";
-      case "Personnel": return "bg-cyan-100 text-cyan-600";
-      default: return "bg-emerald-100 text-emerald-600";
+      case "Update": return "bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300";
+      case "Complaint": return "bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-300";
+      case "Maintenance": return "bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300";
+      case "Report": return "bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300";
+      case "Personnel": return "bg-cyan-100 text-cyan-600 dark:bg-cyan-900 dark:text-cyan-300";
+      default: return "bg-emerald-100 text-emerald-600 dark:bg-emerald-900 dark:text-emerald-300";
     }
   };
 
@@ -256,14 +278,14 @@ export default function Dashboard() {
 
   // ========== ADMIN DASHBOARD (ORIGINAL - FULL VERSION) ==========
   return (
-    <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+    <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100'}`}>
 
       {/* TOP NAV */}
-      <header className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-b'}`}>
+      <header className={`sticky top-0 z-40 ${darkMode ? 'bg-gray-800/80 border-gray-700' : 'bg-white/70 border-b'} backdrop-blur-md`}>
         {/* Top bar */}
-        <div className="px-6 py-3 flex justify-between items-center">
-          <nav className={`flex gap-6 text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-            <Link to="/" className={`${darkMode ? 'hover:text-white' : 'hover:text-gray-900'} transition`}>Dashboard</Link>
+        <div className="px-6 py-4 flex justify-between items-center max-w-7xl mx-auto">
+          <nav className={`flex gap-8 text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            <Link to="/" className={`${darkMode ? 'hover:text-white' : 'hover:text-gray-900'} transition font-semibold text-blue-600`}>Dashboard</Link>
             <Link to="/drivers" className={`${darkMode ? 'hover:text-white' : 'hover:text-gray-900'} transition`}>Drivers</Link>
             <Link to="/conductors" className={`${darkMode ? 'hover:text-white' : 'hover:text-gray-900'} transition`}>Conductors</Link>
             <Link to="/buses" className={`${darkMode ? 'hover:text-white' : 'hover:text-gray-900'} transition`}>Buses</Link>
@@ -274,32 +296,32 @@ export default function Dashboard() {
           </nav>
 
           <div className="flex gap-4 items-center">
-            <button className={`relative ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} p-2 rounded-lg transition`}>
+            <button className={`relative ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} p-2 rounded-lg transition`}>
               <Bell className={`h-5 w-5 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`} />
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-semibold">
                 3
               </span>
             </button>
-            <div className={`flex items-center gap-2 ${darkMode ? 'bg-gray-700' : 'bg-gray-100'} text-gray-900 px-4 py-2 rounded-lg`}>
-              <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-sm font-semibold text-white">
-                {user.name.charAt(0).toUpperCase()}
+            <div className={`flex items-center gap-3 ${darkMode ? 'bg-gray-700' : 'bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200'} px-4 py-2 rounded-lg`}>
+              <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold">
+                A
               </div>
-              <span className="text-sm font-medium">Admin</span>
+              <span className={`text-sm font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Admin</span>
             </div>
           </div>
         </div>
 
         {/* Quick actions bar */}
-        <div className={`px-6 py-2 ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-t'} flex gap-3`}>
-          <Link to="/add-driver" className={`inline-flex items-center gap-2 ${darkMode ? 'bg-gray-600 border-gray-500 text-gray-200 hover:bg-gray-500' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'} px-4 py-1.5 rounded-md text-xs font-medium transition`}>
+        <div className={`px-6 py-3 ${darkMode ? 'bg-gray-700/50 border-gray-600' : 'bg-gradient-to-r from-blue-50 to-transparent border-t'} flex gap-3`}>
+          <Link to="/add-driver" className={`inline-flex items-center gap-2 ${darkMode ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'} px-4 py-1.5 rounded-md text-xs font-semibold transition shadow-sm`}>
             <Plus className="h-3.5 w-3.5" />
             Add Driver
           </Link>
-          <Link to="/add-conductor" className={`inline-flex items-center gap-2 ${darkMode ? 'bg-gray-600 border-gray-500 text-gray-200 hover:bg-gray-500' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'} px-4 py-1.5 rounded-md text-xs font-medium transition`}>
+          <Link to="/add-conductor" className={`inline-flex items-center gap-2 ${darkMode ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'} px-4 py-1.5 rounded-md text-xs font-semibold transition shadow-sm`}>
             <Plus className="h-3.5 w-3.5" />
             Add Conductor
           </Link>
-          <Link to="/add-bus" className={`inline-flex items-center gap-2 ${darkMode ? 'bg-gray-600 border-gray-500 text-gray-200 hover:bg-gray-500' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'} px-4 py-1.5 rounded-md text-xs font-medium transition`}>
+          <Link to="/add-bus" className={`inline-flex items-center gap-2 ${darkMode ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'} px-4 py-1.5 rounded-md text-xs font-semibold transition shadow-sm`}>
             <Plus className="h-3.5 w-3.5" />
             Add Bus
           </Link>
@@ -307,29 +329,37 @@ export default function Dashboard() {
       </header>
 
       {/* HERO */}
-      <section className="max-w-7xl mx-auto px-8 pt-16 pb-20">
-        <h1 className={`text-6xl font-extrabold ${darkMode ? 'text-white' : 'text-gray-900'}`}>BMTC</h1>
-        <p className={`mt-6 max-w-3xl text-lg ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-          Manage large-scale transportation operations that serve millions of
-          commuters across Bangalore, connecting communities and enabling urban mobility.
-        </p>
+      <section className="max-w-7xl mx-auto px-6 pt-12 pb-8">
+        <div className="flex items-end justify-between">
+          <div>
+            <h1 className={`text-5xl font-extrabold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Welcome to BMTC</h1>
+            <p className={`mt-3 text-lg ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              Manage large-scale transportation operations serving millions of commuters
+            </p>
+          </div>
+          <div className={`text-right ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+            <p className="text-sm">Today at <span className="font-semibold">10:45 AM</span></p>
+          </div>
+        </div>
+      </section>
 
-        {/* SUMMARY CARDS */}
-        <div className="mt-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* SUMMARY CARDS */}
+      <section className="max-w-7xl mx-auto px-6 pb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {[
-            { label: "Drivers", value: "4", icon: Users },
-            { label: "Fleet", value: "3", icon: Bus },
-            { label: "Routes", value: "3", icon: Map },
-            { label: "Shifts", value: "3", icon: Clock }
+            { label: "Drivers", value: "4", icon: Users, color: "from-blue-500 to-blue-600" },
+            { label: "Fleet", value: "3", icon: Bus, color: "from-purple-500 to-purple-600" },
+            { label: "Routes", value: "3", icon: Map, color: "from-green-500 to-green-600" },
+            { label: "Shifts", value: "3", icon: Clock, color: "from-orange-500 to-orange-600" }
           ].map((item, i) => {
             const Icon = item.icon;
             return (
-              <div key={i} className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} rounded-xl border p-6 shadow-sm`}>
-                <div className={`h-10 w-10 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'} flex items-center justify-center mb-4`}>
-                  <Icon className={`h-5 w-5 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`} />
+              <div key={i} className={`${darkMode ? 'bg-gray-800 border-gray-700 hover:border-gray-600' : 'bg-white hover:shadow-lg border-gray-200'} rounded-xl border p-6 shadow-sm hover:shadow-md transition duration-300 cursor-pointer transform hover:scale-105`}>
+                <div className={`h-12 w-12 rounded-lg bg-gradient-to-br ${item.color} flex items-center justify-center mb-4`}>
+                  <Icon className="h-6 w-6 text-white" />
                 </div>
-                <p className={`text-sm uppercase ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{item.label}</p>
-                <p className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{item.value}</p>
+                <p className={`text-xs uppercase tracking-wider font-semibold ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{item.label}</p>
+                <p className={`text-4xl font-bold mt-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>{item.value}</p>
               </div>
             );
           })}
@@ -337,22 +367,36 @@ export default function Dashboard() {
       </section>
 
       {/* KPI SECTION (SCROLL REVEAL) */}
-      <section ref={kpiRef} className="max-w-7xl mx-auto px-8 pb-20">
+      <section ref={kpiRef} className="max-w-7xl mx-auto px-6 pb-8">
         {showKpis && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 animate-fadeIn">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 animate-fadeIn">
             {stats.map((stat, i) => {
               const Icon = stat.icon;
+              const isPositive = stat.change.startsWith("+");
               return (
-                <div key={i} className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} border rounded-xl p-5 shadow-sm`}>
-                  <div className="flex justify-between items-center">
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{stat.label}</p>
-                    <Icon className={`h-5 w-5 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} />
+                <div key={i} className={`${darkMode ? 'bg-gray-800 border-gray-700 hover:border-gray-600' : 'bg-white hover:shadow-lg border-gray-200'} border rounded-xl p-5 shadow-sm hover:shadow-md transition duration-300 group`}>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className={`text-xs font-semibold uppercase tracking-wider ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{stat.label}</p>
+                      <p className={`text-2xl font-bold mt-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>{stat.value}</p>
+                    </div>
+                    <div className={`h-10 w-10 rounded-lg bg-gradient-to-br ${stat.gradient} flex items-center justify-center transform group-hover:scale-110 transition`}>
+                      <Icon className="h-5 w-5 text-white" />
+                    </div>
                   </div>
-                  <p className={`text-3xl font-bold mt-3 ${darkMode ? 'text-white' : ''}`}>{stat.value}</p>
-                  <p className={`mt-2 text-sm font-semibold ${stat.change.startsWith("+") ? "text-green-600" : "text-red-600"
-                    }`}>
-                    {stat.change}
-                  </p>
+                  <div className="mt-3 flex items-center gap-1">
+                    {isPositive ? (
+                      <ArrowUpRight className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <ArrowDownRight className="h-4 w-4 text-red-600" />
+                    )}
+                    <p className={`text-sm font-bold ${isPositive ? "text-green-600" : "text-red-600"}`}>
+                      {stat.change}
+                    </p>
+                  </div>
+                  <div className="mt-3 h-1 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div className={`h-full bg-gradient-to-r ${stat.gradient}`} style={{width: stat.value.replace('%', '') + '%'}}></div>
+                  </div>
                 </div>
               );
             })}
@@ -360,29 +404,94 @@ export default function Dashboard() {
         )}
       </section>
 
+      {/* CHARTS SECTION */}
+      <section className="max-w-7xl mx-auto px-6 pb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Performance Chart */}
+          <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl border p-6 shadow-sm`}>
+            <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Weekly Performance</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={performanceData}>
+                <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#374151" : "#e5e7eb"} />
+                <XAxis stroke={darkMode ? "#9ca3af" : "#6b7280"} />
+                <YAxis stroke={darkMode ? "#9ca3af" : "#6b7280"} />
+                <Tooltip 
+                  contentStyle={{
+                    backgroundColor: darkMode ? "#1f2937" : "#ffffff",
+                    border: `1px solid ${darkMode ? "#374151" : "#e5e7eb"}`,
+                    borderRadius: "8px"
+                  }}
+                  labelStyle={{ color: darkMode ? "#e5e7eb" : "#1f2937" }}
+                />
+                <Line type="monotone" dataKey="performance" stroke="#3b82f6" strokeWidth={2} dot={{fill: "#3b82f6", r: 4}} />
+                <Line type="monotone" dataKey="target" stroke="#10b981" strokeWidth={2} strokeDasharray="5 5" dot={{fill: "#10b981", r: 4}} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Fleet Status Chart */}
+          <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl border p-6 shadow-sm flex flex-col`}>
+            <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Fleet Status</h3>
+            <div className="flex-1 flex items-center justify-center">
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={fleetStatusData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, value }) => `${name}: ${value}`}
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {fleetStatusData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: darkMode ? "#1f2937" : "#ffffff",
+                      border: `1px solid ${darkMode ? "#374151" : "#e5e7eb"}`,
+                      borderRadius: "8px"
+                    }}
+                    labelStyle={{ color: darkMode ? "#e5e7eb" : "#1f2937" }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* RECENT ACTIVITY */}
-      <section className="max-w-7xl mx-auto px-8 pb-24">
-        <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} rounded-xl border shadow-sm`}>
-          <div className={`flex justify-between items-center px-6 py-4 ${darkMode ? 'border-gray-700' : 'border-b'}`}>
-            <h2 className={`text-lg font-semibold ${darkMode ? 'text-white' : ''}`}>Recent Activity</h2>
-            <button className="text-sm text-blue-600 hover:underline">
+      <section className="max-w-7xl mx-auto px-6 pb-12">
+        <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} rounded-xl border shadow-sm overflow-hidden`}>
+          <div className={`flex justify-between items-center px-6 py-5 ${darkMode ? 'border-gray-700 bg-gray-800/50' : 'border-b border-gray-200 bg-gradient-to-r from-blue-50 to-transparent'}`}>
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                <Activity className="h-4 w-4 text-white" />
+              </div>
+              <h2 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Recent Activity</h2>
+            </div>
+            <button className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition">
               View All →
             </button>
           </div>
 
-          <div className="divide-y">
+          <div className="divide-y divide-gray-200 dark:divide-gray-700">
             {recentActivity.map((a, i) => {
               const Icon = a.icon;
               return (
-                <div key={i} className={`flex items-center px-6 py-4 ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
-                  <div className={`h-10 w-10 rounded-lg flex items-center justify-center mr-4 ${activityColor(a.type)}`}>
+                <div key={i} className={`flex items-center px-6 py-4 ${darkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50'} transition`}>
+                  <div className={`h-10 w-10 rounded-lg flex items-center justify-center mr-4 flex-shrink-0 ${activityColor(a.type)}`}>
                     <Icon className="h-5 w-5" />
                   </div>
-                  <div className="flex-1">
-                    <p className={`text-sm font-medium ${darkMode ? 'text-white' : ''}`}>{a.desc}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{a.desc}</p>
                     <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{a.time}</p>
                   </div>
-                  <span className={`text-xs font-semibold ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase`}>
+                  <span className={`text-xs font-bold uppercase tracking-wide px-3 py-1 rounded-full ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-600'} ml-4 flex-shrink-0`}>
                     {a.type}
                   </span>
                 </div>
