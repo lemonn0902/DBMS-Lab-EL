@@ -2,6 +2,7 @@ import axios from "axios";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { LogIn, Mail, Lock, Loader2 } from "lucide-react";
+import api from "../services/api";
 
 export default function Login() {
   const [loginType, setLoginType] = useState("admin"); // "admin" or "user"
@@ -19,10 +20,10 @@ export default function Login() {
     setIsLoading(true);
     try {
       const endpoint = loginType === "admin" 
-        ? "http://localhost:5000/api/auth/login"
-        : "http://localhost:5000/api/auth/user/login";
+        ? "/auth/login"
+        : "/auth/user/login";
 
-      const res = await axios.post(endpoint, { 
+      const res = await api.post(endpoint, { 
         email, 
         password 
       });

@@ -2,6 +2,7 @@ import axios from "axios";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { UserPlus, Mail, Lock, User, Phone, Loader2 } from "lucide-react";
+import api from "../services/api";
 
 export default function UserSignup() {
   const [name, setName] = useState("");
@@ -19,7 +20,7 @@ export default function UserSignup() {
 
     setIsLoading(true);
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/user/signup", { 
+      const res = await api.post("/auth/user/signup", { 
         name,
         email, 
         password,

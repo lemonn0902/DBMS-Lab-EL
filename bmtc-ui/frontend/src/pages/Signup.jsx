@@ -2,6 +2,7 @@ import axios from "axios";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { UserPlus, User, Mail, Lock } from "lucide-react";
+import api from "../services/api";
 
 export default function Signup() {
   const [name, setName] = useState("");
@@ -11,7 +12,7 @@ export default function Signup() {
 
   const signup = async () => {
     try {
-      await axios.post("http://localhost:5000/api/auth/signup", { name, email, password });
+      await api.post("/auth/signup", { name, email, password });
       alert("Admin created successfully!");
       navigate("/login");
     } catch (err) {
