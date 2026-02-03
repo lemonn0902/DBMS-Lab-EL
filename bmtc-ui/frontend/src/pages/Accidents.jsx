@@ -5,6 +5,7 @@ import api from "../services/api";
 export default function Accidents() {
   const { darkMode } = useTheme();
   const [items, setItems] = useState([]);
+  const [selectedAccident, setSelectedAccident] = useState(null);
 
   useEffect(() => {
     api.get("/accidents").then(res => setItems(res.data));
@@ -75,8 +76,9 @@ export default function Accidents() {
             return (
               <div
                 key={a.accident_id}
-                className={`rounded-xl border-l-4 overflow-hidden transition-all duration-300 ${darkMode
-                    ? "bg-gray-800 border-gray-700"
+                onClick={() => setSelectedAccident(a)}
+                className={`rounded-xl border-l-4 overflow-hidden transition-all duration-300 cursor-pointer ${darkMode
+                    ? "bg-gray-800 border-gray-700 hover:shadow-xl hover:shadow-gray-900/50"
                     : "bg-white shadow-md hover:shadow-xl"
                   } ${getSeverityColor(a.cost)}`}
               >
@@ -140,6 +142,79 @@ export default function Accidents() {
             );
           })}
         </div>
+
+        {/* Accident Details Modal */}
+        {selectedAccident && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className={`rounded-xl max-w-md w-full ${darkMode ? "bg-gray-800" : "bg-white"} shadow-2xl`}>
+              <div className={`p-6 border-b ${darkMode ? "border-gray-700" : "border-slate-200"}`}>
+                <div className="flex items-center justify-between">
+                  <h2 className={`text-xl font-bold ${darkMode ? "text-white" : "text-slate-800"}`}>
+                    Incident #{selectedAccident.accident_id}
+                  </h2>
+                  <button
+                    onClick={() => setSelectedAccident(null)}
+                    className={`p-1 rounded hover:bg-gray-700 ${darkMode ? "text-gray-400" : "text-slate-600"}`}
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div className="p-6 space-y-4">
+                <div>
+                  <p className={`text-sm font-medium ${darkMode ? "text-gray-400" : "text-slate-600"} mb-1`}>
+                    Incident Details
+                  </p>
+                  <p className={`text-sm leading-relaxed ${darkMode ? "text-gray-300" : "text-slate-700"}`}>
+                    {selectedAccident.accident_details}
+                  </p>
+                </div>
+                <div className={`pt-4 border-t ${darkMode ? "border-gray-700" : "border-slate-200"}`}>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className={`${darkMode ? "text-gray-400" : "text-slate-600"} text-xs`}>Driver</p>
+                      <p className={`font-medium ${darkMode ? "text-white" : "text-slate-800"}`}>
+                        {selectedAccident.Driver?.name || "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className={`${darkMode ? "text-gray-400" : "text-slate-600"} text-xs`}>Date</p>
+                      <p className={`font-medium ${darkMode ? "text-white" : "text-slate-800"}`}>
+                        {new Date(selectedAccident.accident_date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                      </p>
+                    </div>
+                    <div>
+                      <p className={`${darkMode ? "text-gray-400" : "text-slate-600"} text-xs`}>Location</p>
+                      <p className={`font-medium ${darkMode ? "text-white" : "text-slate-800"}`}>
+                        {selectedAccident.location}
+                      </p>
+                    </div>
+                    <div>
+                      <p className={`${darkMode ? "text-gray-400" : "text-slate-600"} text-xs`}>Cost</p>
+                      <p className={`font-medium ${darkMode ? "text-white" : "text-slate-800"}`}>
+                        ${selectedAccident.cost}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className={`p-4 border-t ${darkMode ? "border-gray-700" : "border-slate-200"} flex justify-end`}>
+                <button
+                  onClick={() => setSelectedAccident(null)}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    darkMode
+                      ? "bg-gray-700 text-white hover:bg-gray-600"
+                      : "bg-slate-100 text-slate-800 hover:bg-slate-200"
+                  }`}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

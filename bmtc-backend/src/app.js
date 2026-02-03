@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 
 // CORS middleware
-const frontend_url = process.env.FRONTEND_URL || "http://localhost:3000";
+const frontend_url = process.env.FRONTEND_URL || "http://localhost:5173";
 
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", frontend_url);

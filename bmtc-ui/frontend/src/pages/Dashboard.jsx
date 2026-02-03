@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { useTheme } from "../contexts/ThemeContext.jsx"
+import api from "../services/api";
 import {
   Bus,
   Users,
@@ -26,6 +27,18 @@ import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, R
 export default function Dashboard() {
   const { darkMode } = useTheme();
   const [user, setUser] = useState({ name: "User", role: "user" });
+  const [dashboardData, setDashboardData] = useState({
+    totalDrivers: 0,
+    totalBuses: 0,
+    totalRoutes: 0,
+    totalShifts: 0,
+    activeDrivers: 0,
+    activeShifts: 0,
+    totalComplaints: 0,
+    totalAccidents: 0,
+    resolvedComplaints: 0
+  });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -37,6 +50,76 @@ export default function Dashboard() {
       }
     }
   }, []);
+
+  useEffect(() => {
+    if (user.role === "admin") {
+      fetchDashboardData();
+    }
+  }, [user.role]);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const [driversRes, busesRes, routesRes, shiftsRes, complaintsRes, accidentsRes] = await Promise.all([
+        api.get("/drivers"),
+        api.get("/buses"),
+        api.get("/routes"),
+        api.get("/shifts"),
+        api.get("/complaints"),
+        api.get("/accidents")
+      ]);
+
+      const drivers = driversRes.data;
+      const buses = busesRes.data;
+      const routes = routesRes.data;
+      const shifts = shiftsRes.data;
+      const complaints = complaintsRes.data;
+      const accidents = accidentsRes.data;
+
+      // Calculate active shifts (today and current time)
+      const today = new Date().toDateString();
+      const now = new Date();
+      const activeShifts = shifts.filter(s => {
+        const shiftDate = new Date(s.shift_date).toDateString();
+        if (shiftDate !== today) return false;
+        
+        try {
+          let startDate = new Date(s.start_time);
+          let endDate = new Date(s.end_time);
+          if (isNaN(startDate.getTime())) {
+            const [h, m] = (s.start_time || "00:00").split(':');
+            startDate = new Date();
+            startDate.setHours(parseInt(h), parseInt(m), 0);
+          }
+          if (isNaN(endDate.getTime())) {
+            const [h, m] = (s.end_time || "00:00").split(':');
+            endDate = new Date();
+            endDate.setHours(parseInt(h), parseInt(m), 0);
+            if (endDate < startDate) endDate.setDate(endDate.getDate() + 1);
+          }
+          return now >= startDate && now <= endDate;
+        } catch {
+          return false;
+        }
+      }).length;
+
+      setDashboardData({
+        totalDrivers: drivers.length,
+        totalBuses: buses.length,
+        totalRoutes: routes.length,
+        totalShifts: shifts.length,
+        activeDrivers: drivers.filter(d => d.current_status === "Active").length,
+        activeShifts: activeShifts,
+        totalComplaints: complaints.length,
+        totalAccidents: accidents.length,
+        resolvedComplaints: complaints.filter(c => c.status === "Resolved").length
+      });
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const isAdmin = user.role === "admin";
 
@@ -63,12 +146,12 @@ export default function Dashboard() {
 
   /* ---------------- DATA (ADMIN ONLY) ---------------- */
   const stats = [
-    { label: "Active Buses", value: "118", change: "+2%", icon: Activity, gradient: "from-blue-500 to-blue-600" },
-    { label: "On-time Performance", value: "94.2%", change: "+1.5%", icon: TrendingUp, gradient: "from-green-500 to-green-600" },
-    { label: "Active Drivers", value: "156", change: "+4%", icon: Users, gradient: "from-purple-500 to-purple-600" },
-    { label: "Daily Passengers", value: "5.2M", change: "+3.2%", icon: Route, gradient: "from-orange-500 to-orange-600" },
-    { label: "Avg. Speed", value: "32 km/h", change: "-0.5%", icon: Shield, gradient: "from-red-500 to-red-600" },
-    { label: "Fleet Health", value: "92%", change: "+1.8%", icon: Bus, gradient: "from-cyan-500 to-cyan-600" }
+    { label: "Active Buses", value: dashboardData.totalBuses.toString(), change: "+2%", icon: Activity, gradient: "from-blue-500 to-blue-600" },
+    { label: "Active Drivers", value: dashboardData.activeDrivers.toString(), change: `+${Math.round((dashboardData.activeDrivers / dashboardData.totalDrivers) * 100)}%`, icon: Users, gradient: "from-purple-500 to-purple-600" },
+    { label: "Total Routes", value: dashboardData.totalRoutes.toString(), change: "+0%", icon: Route, gradient: "from-orange-500 to-orange-600" },
+    { label: "Active Shifts", value: dashboardData.activeShifts.toString(), change: "+1.5%", icon: Clock, gradient: "from-green-500 to-green-600" },
+    { label: "Total Complaints", value: dashboardData.totalComplaints.toString(), change: "+8.2%", icon: FileText, gradient: "from-red-500 to-red-600" },
+    { label: "Fleet Health", value: `${Math.round((dashboardData.activeShifts / Math.max(dashboardData.totalShifts, 1)) * 100)}%`, change: "+1.8%", icon: Shield, gradient: "from-cyan-500 to-cyan-600" }
   ];
 
   // Chart data
@@ -347,10 +430,10 @@ export default function Dashboard() {
       <section className="max-w-7xl mx-auto px-6 pb-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {[
-            { label: "Drivers", value: "4", icon: Users, color: "from-blue-500 to-blue-600" },
-            { label: "Fleet", value: "3", icon: Bus, color: "from-purple-500 to-purple-600" },
-            { label: "Routes", value: "3", icon: Map, color: "from-green-500 to-green-600" },
-            { label: "Shifts", value: "3", icon: Clock, color: "from-orange-500 to-orange-600" }
+            { label: "Drivers", value: dashboardData.totalDrivers, icon: Users, color: "from-blue-500 to-blue-600" },
+            { label: "Fleet", value: dashboardData.totalBuses, icon: Bus, color: "from-purple-500 to-purple-600" },
+            { label: "Routes", value: dashboardData.totalRoutes, icon: Map, color: "from-green-500 to-green-600" },
+            { label: "Shifts", value: dashboardData.totalShifts, icon: Clock, color: "from-orange-500 to-orange-600" }
           ].map((item, i) => {
             const Icon = item.icon;
             return (

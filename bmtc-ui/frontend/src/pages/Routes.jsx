@@ -69,16 +69,27 @@ export default function Routes() {
   };
 
   const calculateEfficiency = (route) => {
-    // Better efficiency calculation based on distance and duration
-    let duration = 1;
+    // Parse duration from HH:MM format or object format
+    let durationMinutes = 0;
+    
     if (typeof route.average_duration === 'object') {
-      duration = (route.average_duration.hours || 0) * 60 + (route.average_duration.minutes || 0);
+      durationMinutes = (route.average_duration.hours || 0) * 60 + (route.average_duration.minutes || 0);
+    } else if (typeof route.average_duration === 'string') {
+      // Parse HH:MM format
+      const parts = route.average_duration.split(':');
+      if (parts.length === 2) {
+        durationMinutes = parseInt(parts[0]) * 60 + parseInt(parts[1]);
+      } else {
+        durationMinutes = parseInt(route.average_duration) || 1;
+      }
     } else {
-      duration = parseInt(route.average_duration) || 1;
+      durationMinutes = parseInt(route.average_duration) || 1;
     }
 
+    if (durationMinutes === 0) durationMinutes = 1;
+
     // Calculate actual speed in km/min
-    const speedKmPerMin = route.total_distance / duration;
+    const speedKmPerMin = route.total_distance / durationMinutes;
 
     // Use 0.8 km/min (48 km/h) as optimal speed for city buses
     // This is more realistic than 1 km/min (60 km/h) for urban routes
@@ -603,12 +614,22 @@ export default function Routes() {
 
             <div className="space-y-4">
               <div>
+                <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Route ID</label>
+                <input
+                  type="text"
+                  value={editingRoute.route_id || ''}
+                  disabled
+                  className={`w-full px-3 py-2 border ${darkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-gray-50'} rounded-lg opacity-60 cursor-not-allowed`}
+                />
+              </div>
+
+              <div>
                 <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Start Point</label>
                 <input
                   type="text"
                   value={editingRoute.start_point || ''}
                   onChange={(e) => setEditingRoute({ ...editingRoute, start_point: e.target.value })}
-                  className={`w-full px-3 py-2 border ${darkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-gray-50'} rounded-lg`}
+                  className={`w-full px-3 py-2 border ${darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
                 />
               </div>
 
@@ -618,7 +639,7 @@ export default function Routes() {
                   type="text"
                   value={editingRoute.end_point || ''}
                   onChange={(e) => setEditingRoute({ ...editingRoute, end_point: e.target.value })}
-                  className={`w-full px-3 py-2 border ${darkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-gray-50'} rounded-lg`}
+                  className={`w-full px-3 py-2 border ${darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
                 />
               </div>
 
@@ -626,10 +647,23 @@ export default function Routes() {
                 <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Distance (km)</label>
                 <input
                   type="number"
+                  step="0.1"
                   value={editingRoute.total_distance || ''}
                   onChange={(e) => setEditingRoute({ ...editingRoute, total_distance: parseFloat(e.target.value) })}
-                  className={`w-full px-3 py-2 border ${darkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-gray-50'} rounded-lg`}
+                  className={`w-full px-3 py-2 border ${darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
                 />
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Average Duration (HH:MM)</label>
+                <input
+                  type="text"
+                  placeholder="e.g., 01:30"
+                  value={editingRoute.average_duration || ''}
+                  onChange={(e) => setEditingRoute({ ...editingRoute, average_duration: e.target.value })}
+                  className={`w-full px-3 py-2 border ${darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                />
+                <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Format: HH:MM (e.g., 01:30 for 1 hour 30 minutes)</p>
               </div>
 
               <div className="flex gap-3 mt-6">

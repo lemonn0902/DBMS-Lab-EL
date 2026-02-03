@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "../contexts/ThemeContext.jsx";
+import { Link } from "react-router-dom";
 import {
   Bus,
   TrendingUp,
@@ -32,10 +33,9 @@ export default function Buses() {
   /* ---------------- HELPERS ---------------- */
   const getTypeColor = (type) => {
     const types = {
-      AC: "bg-blue-100 text-blue-700",
-      "Non-AC": "bg-emerald-100 text-emerald-700",
-      Sleeper: "bg-purple-100 text-purple-700",
-      Express: "bg-orange-100 text-orange-700"
+      Volvo: "bg-blue-100 text-blue-700",
+      Electric: "bg-green-100 text-green-700",
+      Diesel: "bg-yellow-100 text-yellow-700"
     };
     return types[type] || "bg-gray-100 text-gray-700";
   };
@@ -123,9 +123,11 @@ export default function Buses() {
             </div>
           </div>
 
-          <button onClick={handleAdd} className="bg-gray-900 text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-gray-800 transition">
-            Add Bus
-          </button>
+          <Link to="/add-bus">
+            <button className="bg-gray-900 text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-gray-800 transition">
+              Add Bus
+            </button>
+          </Link>
         </div>
 
         {/* STATS */}
@@ -178,10 +180,9 @@ export default function Buses() {
                 className={`appearance-none pl-10 pr-8 py-2.5 border ${darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none`}
               >
                 <option value="all">All Types</option>
-                <option value="Standard">Standard</option>
-                <option value="Deluxe">Deluxe</option>
-                <option value="Sleeper">Sleeper</option>
-                <option value="Express">Express</option>
+                <option value="Volvo">Volvo</option>
+                <option value="Electric">Electric</option>
+                <option value="Diesel">Diesel</option>
               </select>
             </div>
           </div>
@@ -344,10 +345,9 @@ export default function Buses() {
                     onChange={(e) => setEditingBus({ ...editingBus, type: e.target.value })}
                     className={`w-full px-3 py-2 border ${darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
                   >
-                    <option value="AC">AC</option>
-                    <option value="Non-AC">Non-AC</option>
-                    <option value="Sleeper">Sleeper</option>
-                    <option value="Express">Express</option>
+                    <option value="Volvo">Volvo</option>
+                    <option value="Electric">Electric</option>
+                    <option value="Diesel">Diesel</option>
                   </select>
                 </div>
                 <div>
@@ -419,10 +419,9 @@ export default function Buses() {
                     onChange={(e) => setEditingBus({ ...editingBus, type: e.target.value })}
                     className={`w-full px-3 py-2 border ${darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
                   >
-                    <option value="AC">AC</option>
-                    <option value="Non-AC">Non-AC</option>
-                    <option value="Sleeper">Sleeper</option>
-                    <option value="Express">Express</option>
+                    <option value="Volvo">Volvo</option>
+                    <option value="Electric">Electric</option>
+                    <option value="Diesel">Diesel</option>
                   </select>
                 </div>
                 <div>

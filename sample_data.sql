@@ -1996,4 +1996,648 @@ VALUES (
         30000,
         '2025-01-10',
         'Skid due to rain'
+    ),
+    (
+        4,
+        5,
+        5,
+        104,
+        'Jayanagar Main Road',
+        25000,
+        '2025-01-15',
+        'Hit by another vehicle at traffic signal'
+    ),
+    (
+        5,
+        7,
+        7,
+        106,
+        'Yeshwantpur Junction',
+        35000,
+        '2025-01-20',
+        'Collision with two-wheeler'
+    );
+
+-- ==========================
+-- ADDITIONAL DRIVER DATA (More Inactive and On Leave)
+-- ==========================
+
+INSERT INTO
+    driver (
+        driver_id,
+        name,
+        license_no,
+        join_date,
+        experience_years,
+        contact_no,
+        current_status
+    )
+VALUES (
+        16,
+        'Anand Kumar',
+        'KA16L40404',
+        '2021-08-10',
+        2,
+        '9876543300',
+        'Inactive'
+    ),
+    (
+        17,
+        'Sanjiv Pillai',
+        'KA17L50505',
+        '2020-12-15',
+        3,
+        '9876543301',
+        'Inactive'
+    ),
+    (
+        18,
+        'Harsha Reddy',
+        'KA18L60606',
+        '2019-03-22',
+        5,
+        '9876543302',
+        'On Leave'
+    ),
+    (
+        19,
+        'Girish Nayak',
+        'KA19L70707',
+        '2018-09-30',
+        6,
+        '9876543303',
+        'On Leave'
+    ),
+    (
+        20,
+        'Vikram Singh',
+        'KA20L80808',
+        '2017-06-12',
+        7,
+        '9876543304',
+        'Active'
+    ),
+    (
+        21,
+        'Rajkumar Yadav',
+        'KA21L90909',
+        '2019-11-08',
+        4,
+        '9876543305',
+        'Inactive'
+    ),
+    (
+        22,
+        'Mohan Shetty',
+        'KA22L11121',
+        '2020-05-19',
+        4,
+        '9876543306',
+        'On Leave'
+    ),
+    (
+        23,
+        'Thirumal Reddy',
+        'KA23L22132',
+        '2018-02-14',
+        7,
+        '9876543307',
+        'Active'
+    ),
+    (
+        24,
+        'Ashok Nair',
+        'KA24L33143',
+        '2021-03-25',
+        2,
+        '9876543308',
+        'Inactive'
+    ),
+    (
+        25,
+        'Balaji Gowda',
+        'KA25L44154',
+        '2019-07-18',
+        5,
+        '9876543309',
+        'Active'
+    );
+
+-- ==========================
+-- ADDITIONAL CONDUCTOR DATA
+-- ==========================
+
+INSERT INTO
+    conductor (
+        conductor_id,
+        name,
+        join_date,
+        contact_no,
+        assigned_route
+    )
+VALUES (
+        16,
+        'Harshita Desai',
+        '2020-11-20',
+        '9876501247',
+        106
+    ),
+    (
+        17,
+        'Navya Sharma',
+        '2021-04-12',
+        '9876501248',
+        107
+    ),
+    (
+        18,
+        'Divya Rao',
+        '2019-08-30',
+        '9876501249',
+        108
+    ),
+    (
+        19,
+        'Fatima Khan',
+        '2020-01-15',
+        '9876501250',
+        109
+    ),
+    (
+        20,
+        'Asha Verma',
+        '2018-10-05',
+        '9876501251',
+        110
+    ),
+    (
+        21,
+        'Chitra Patel',
+        '2019-12-20',
+        '9876501252',
+        101
+    ),
+    (
+        22,
+        'Deepa Iyer',
+        '2021-06-10',
+        '9876501253',
+        102
+    ),
+    (
+        23,
+        'Esha Gupta',
+        '2020-03-08',
+        '9876501254',
+        103
+    ),
+    (
+        24,
+        'Fiona Pinto',
+        '2019-09-14',
+        '9876501255',
+        104
+    ),
+    (
+        25,
+        'Geeta Kumari',
+        '2018-05-25',
+        '9876501256',
+        105
+    );
+
+-- ==========================
+-- ADDITIONAL ROUTES DATA
+-- ==========================
+
+INSERT INTO
+    route (
+        route_id,
+        start_point,
+        end_point,
+        total_distance,
+        average_duration
+    )
+VALUES (
+        111,
+        'Orion Mall',
+        'Peenya Industrial Area',
+        18.9,
+        '01:05'
+    ),
+    (
+        112,
+        'Tumkur Road',
+        'Bellandur Tech Park',
+        35.5,
+        '02:15'
+    ),
+    (
+        113,
+        'Bannerghatta Road',
+        'Hosur Road',
+        22.3,
+        '01:30'
+    ),
+    (
+        114,
+        'Outer Ring Road',
+        'Hebbal Lake',
+        28.7,
+        '01:45'
+    ),
+    (
+        115,
+        'Indiranagar',
+        'Sarjapur Road',
+        20.5,
+        '01:25'
+    );
+
+-- ==========================
+-- ADDITIONAL BUS DATA
+-- ==========================
+
+INSERT INTO
+    bus (
+        bus_id,
+        depot_name,
+        capacity,
+        type,
+        registration_no
+    )
+VALUES (
+        21,
+        'Depot 01',
+        48,
+        'Volvo',
+        'KA21GG9090'
+    ),
+    (
+        22,
+        'Depot 02',
+        50,
+        'Electric',
+        'KA22HH1010'
+    ),
+    (
+        23,
+        'Depot 03',
+        55,
+        'Diesel',
+        'KA23II2020'
+    ),
+    (
+        24,
+        'Depot 04',
+        45,
+        'Volvo',
+        'KA24JJ3030'
+    ),
+    (
+        25,
+        'Depot 01',
+        52,
+        'Electric',
+        'KA25KK4040'
+    ),
+    (
+        26,
+        'Depot 02',
+        50,
+        'Diesel',
+        'KA26LL5050'
+    ),
+    (
+        27,
+        'Depot 03',
+        48,
+        'Volvo',
+        'KA27MM6060'
+    ),
+    (
+        28,
+        'Depot 04',
+        55,
+        'Electric',
+        'KA28NN7070'
+    );
+
+-- ==========================
+-- ADDITIONAL SHIFT DATA (July 2025)
+-- ==========================
+
+INSERT INTO
+    shift (
+        shift_id,
+        driver_id,
+        conductor_id,
+        bus_id,
+        route_id,
+        shift_date,
+        start_time,
+        end_time
+    )
+VALUES
+    -- July 2025
+    (
+        91,
+        12,
+        1,
+        11,
+        101,
+        '2025-07-01',
+        '08:00',
+        '12:00'
+    ),
+    (
+        92,
+        13,
+        2,
+        12,
+        102,
+        '2025-07-01',
+        '09:00',
+        '13:30'
+    ),
+    (
+        93,
+        14,
+        3,
+        13,
+        103,
+        '2025-07-02',
+        '07:00',
+        '11:00'
+    ),
+    (
+        94,
+        15,
+        4,
+        14,
+        104,
+        '2025-07-02',
+        '10:00',
+        '14:00'
+    ),
+    (
+        95,
+        1,
+        5,
+        15,
+        105,
+        '2025-07-03',
+        '06:30',
+        '10:30'
+    ),
+    (
+        96,
+        2,
+        6,
+        16,
+        106,
+        '2025-07-03',
+        '08:00',
+        '12:20'
+    ),
+    (
+        97,
+        20,
+        7,
+        17,
+        107,
+        '2025-07-04',
+        '09:15',
+        '13:30'
+    ),
+    (
+        98,
+        23,
+        8,
+        18,
+        108,
+        '2025-07-04',
+        '07:30',
+        '11:25'
+    ),
+    (
+        99,
+        25,
+        9,
+        19,
+        109,
+        '2025-07-05',
+        '10:00',
+        '14:25'
+    ),
+    (
+        100,
+        4,
+        10,
+        20,
+        110,
+        '2025-07-05',
+        '06:00',
+        '10:35'
+    );
+
+-- ==========================
+-- ADDITIONAL COMPLAINT DATA (July - September 2025)
+-- ==========================
+
+INSERT INTO
+    complaint (
+        complaint_id,
+        complaint_date,
+        status,
+        bus_id,
+        driver_id,
+        complaint_details
+    )
+VALUES
+    (
+        63,
+        '2025-07-01',
+        'Pending',
+        3,
+        3,
+        'Bus air conditioning not functioning'
+    ),
+    (
+        64,
+        '2025-07-03',
+        'In Progress',
+        5,
+        5,
+        'Driver ignored request stop'
+    ),
+    (
+        65,
+        '2025-07-05',
+        'Resolved',
+        8,
+        8,
+        'Broken seats in rear section'
+    ),
+    (
+        66,
+        '2025-07-08',
+        'Pending',
+        11,
+        11,
+        'No proper route information displayed'
+    ),
+    (
+        67,
+        '2025-07-10',
+        'In Progress',
+        2,
+        2,
+        'Reckless driving near school zone'
+    ),
+    (
+        68,
+        '2025-07-15',
+        'Resolved',
+        15,
+        14,
+        'Conductor behavior complaint'
+    ),
+    (
+        69,
+        '2025-08-02',
+        'Pending',
+        4,
+        4,
+        'Unsafe emergency exit blocked'
+    ),
+    (
+        70,
+        '2025-08-05',
+        'In Progress',
+        9,
+        9,
+        'Seat belts not available'
+    ),
+    (
+        71,
+        '2025-08-10',
+        'Resolved',
+        6,
+        6,
+        'Pollution control certificate expired'
+    ),
+    (
+        72,
+        '2025-08-15',
+        'Pending',
+        12,
+        12,
+        'Driver speeding on residential road'
+    ),
+    (
+        73,
+        '2025-09-01',
+        'In Progress',
+        1,
+        1,
+        'Bus arrived extremely late'
+    ),
+    (
+        74,
+        '2025-09-05',
+        'Resolved',
+        7,
+        7,
+        'Conductor misbehavior with elderly passenger'
+    ),
+    (
+        75,
+        '2025-09-10',
+        'Pending',
+        13,
+        13,
+        'No ticket issued by conductor'
+    ),
+    (
+        76,
+        '2025-09-12',
+        'In Progress',
+        10,
+        10,
+        'Overcrowding beyond capacity'
+    ),
+    (
+        77,
+        '2025-09-18',
+        'Resolved',
+        18,
+        14,
+        'Broken GPS navigation system'
+    );
+
+-- ==========================
+-- ADDITIONAL ACCIDENT DATA (July - September 2025)
+-- ==========================
+
+INSERT INTO
+    accident_report (
+        accident_id,
+        bus_id,
+        driver_id,
+        route_id,
+        location,
+        cost,
+        accident_date,
+        accident_details
+    )
+VALUES (
+        6,
+        4,
+        4,
+        104,
+        'Marathahalli',
+        28000,
+        '2025-07-08',
+        'Side collision with auto at traffic junction'
+    ),
+    (
+        7,
+        10,
+        10,
+        110,
+        'JP Nagar',
+        18000,
+        '2025-07-15',
+        'Minor rear-end collision'
+    ),
+    (
+        8,
+        6,
+        6,
+        106,
+        'Yelahanka Road',
+        50000,
+        '2025-08-03',
+        'Major collision with truck'
+    ),
+    (
+        9,
+        15,
+        14,
+        105,
+        'Banashankari Junction',
+        22000,
+        '2025-08-20',
+        'Hit by rash driver'
+    ),
+    (
+        10,
+        9,
+        9,
+        109,
+        'Hebbal Lake',
+        32000,
+        '2025-09-05',
+        'Road accident due to wet road conditions'
     );

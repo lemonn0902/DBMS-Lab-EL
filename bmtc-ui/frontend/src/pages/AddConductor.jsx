@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "../contexts/ThemeContext.jsx";
 import api from "../services/api";
 import {
@@ -21,7 +21,10 @@ import {
 
 export default function AddConductor() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { darkMode } = useTheme();
+  const editConductor = location.state?.editConductor;
+  const isEdit = !!editConductor;
 
   const [routes, setRoutes] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -33,9 +36,20 @@ export default function AddConductor() {
     name: "",
     join_date: "",
     contact_no: "",
-    assigned_route: "",
-    experience: ""
+    assigned_route: ""
   });
+
+  useEffect(() => {
+    if (isEdit && editConductor) {
+      setForm({
+        conductor_id: editConductor.conductor_id || "",
+        name: editConductor.name || "",
+        join_date: editConductor.join_date ? editConductor.join_date.split('T')[0] : "",
+        contact_no: editConductor.contact_no || "",
+        assigned_route: editConductor.assigned_route || ""
+      });
+    }
+  }, [isEdit, editConductor]);
 
   useEffect(() => {
     api.get("/routes")
@@ -72,16 +86,23 @@ export default function AddConductor() {
 
     setLoading(true);
     try {
-      await api.post("/conductors", {
-        ...form,
-        conductor_id: parseInt(form.conductor_id),
-        assigned_route: form.assigned_route ? parseInt(form.assigned_route) : null,
-        experience: form.experience ? parseInt(form.experience) : 0
-      });
+      if (isEdit) {
+        await api.put(`/conductors/${editConductor.conductor_id}`, {
+          ...form,
+          conductor_id: parseInt(form.conductor_id),
+          assigned_route: form.assigned_route ? parseInt(form.assigned_route) : null
+        });
+      } else {
+        await api.post("/conductors", {
+          ...form,
+          conductor_id: parseInt(form.conductor_id),
+          assigned_route: form.assigned_route ? parseInt(form.assigned_route) : null
+        });
+      }
       setSuccess(true);
       setTimeout(() => navigate("/conductors"), 1500);
     } catch (err) {
-      setErrors({ submit: err.response?.data?.error || "Failed to add conductor" });
+      setErrors({ submit: err.response?.data?.error || (isEdit ? "Failed to update conductor" : "Failed to add conductor") });
     } finally {
       setLoading(false);
     }
@@ -110,10 +131,10 @@ export default function AddConductor() {
           </div>
           <div>
             <h1 className={`text-3xl font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>
-              Register New Conductor
+              {isEdit ? "Edit Conductor" : "Register New Conductor"}
             </h1>
             <p className={`${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-              Add a new conductor to the BMTC team
+              {isEdit ? "Update conductor information" : "Add a new conductor to the BMTC team"}
             </p>
           </div>
         </div>

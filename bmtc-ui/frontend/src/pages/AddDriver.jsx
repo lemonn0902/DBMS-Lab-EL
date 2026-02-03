@@ -1,9 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import api from "../services/api";
 import { useTheme } from "../contexts/ThemeContext.jsx";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export default function AddDriver() {
   const { darkMode } = useTheme();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const editDriver = location.state?.editDriver;
+  const isEdit = !!editDriver;
 
   const [form, setForm] = useState({
     driver_id: "",
@@ -15,6 +20,20 @@ export default function AddDriver() {
     current_status: "Active"
   });
 
+  useEffect(() => {
+    if (isEdit && editDriver) {
+      setForm({
+        driver_id: editDriver.driver_id || "",
+        name: editDriver.name || "",
+        license_no: editDriver.license_no || "",
+        join_date: editDriver.join_date ? editDriver.join_date.split('T')[0] : "",
+        experience_years: editDriver.experience_years || "",
+        contact_no: editDriver.contact_no || "",
+        current_status: editDriver.current_status || "Active"
+      });
+    }
+  }, [isEdit, editDriver]);
+
   const handleChange = e => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -22,20 +41,26 @@ export default function AddDriver() {
   const handleSubmit = async e => {
     e.preventDefault();
     try {
-      await api.post("/drivers", form);
-      alert("Driver added successfully!");
-      setForm({
-        driver_id: "",
-        name: "",
-        license_no: "",
-        join_date: "",
-        experience_years: "",
-        contact_no: "",
-        current_status: "Active"
-      });
+      if (isEdit) {
+        await api.put(`/drivers/${editDriver.driver_id}`, form);
+        alert("Driver updated successfully!");
+        navigate('/drivers');
+      } else {
+        await api.post("/drivers", form);
+        alert("Driver added successfully!");
+        setForm({
+          driver_id: "",
+          name: "",
+          license_no: "",
+          join_date: "",
+          experience_years: "",
+          contact_no: "",
+          current_status: "Active"
+        });
+      }
     } catch (error) {
-      console.error("Error adding driver:", error);
-      alert(`Error: ${error.response?.data?.error || error.message || "Failed to add driver"}`);
+      console.error(isEdit ? "Error updating driver:" : "Error adding driver:", error);
+      alert(`Error: ${error.response?.data?.error || error.message || (isEdit ? "Failed to update driver" : "Failed to add driver")}`);
     }
   };
 
@@ -74,10 +99,10 @@ export default function AddDriver() {
             </div>
             <div>
               <h2 className={`text-4xl font-bold ${darkMode ? "text-white" : "text-slate-800"}`}>
-                Add New Driver
+                {isEdit ? "Edit Driver" : "Add New Driver"}
               </h2>
               <p className={`${darkMode ? "text-gray-300" : "text-slate-600"} mt-1`}>
-                Register a new driver to the fleet
+                {isEdit ? "Update driver information" : "Register a new driver to the fleet"}
               </p>
             </div>
           </div>

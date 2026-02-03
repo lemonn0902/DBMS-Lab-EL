@@ -101,7 +101,7 @@ export default function Complaints() {
                       : "bg-slate-100 border-slate-200"
                     }`}
                 >
-                  {["ID", "Driver", "Bus", "Status", "Details"].map(h => (
+                  {["ID", "Driver", "Bus", "Date", "Status", "Details"].map(h => (
                     <th
                       key={h}
                       className={`px-6 py-4 text-left text-xs font-semibold uppercase ${darkMode ? "text-gray-300" : "text-slate-700"
@@ -136,6 +136,11 @@ export default function Complaints() {
                           }`}
                       >
                         {c.Bus?.registration_no || "N/A"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm">
+                      <span className={darkMode ? "text-gray-300" : "text-slate-700"}>
+                        {new Date(c.complaint_date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
                       </span>
                     </td>
                     <td className="px-6 py-4">

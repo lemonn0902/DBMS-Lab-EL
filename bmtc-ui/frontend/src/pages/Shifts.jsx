@@ -60,6 +60,46 @@ export default function Shifts() {
     }
   };
 
+  // Helper function to check if a date is today
+  const isToday = (dateString) => {
+    if (!dateString) return false;
+    const shiftDate = new Date(dateString).toDateString();
+    const todayDate = new Date().toDateString();
+    return shiftDate === todayDate;
+  };
+
+  // Helper function to check if shift is active (today and within time range)
+  const isShiftActive = (shift) => {
+    if (!isToday(shift.shift_date)) return false;
+    
+    const now = new Date();
+    try {
+      // Parse start time
+      let startDate = new Date(shift.start_time);
+      if (isNaN(startDate.getTime())) {
+        const [hours, minutes] = shift.start_time.split(':');
+        startDate = new Date();
+        startDate.setHours(parseInt(hours), parseInt(minutes || 0), 0);
+      }
+
+      // Parse end time
+      let endDate = new Date(shift.end_time);
+      if (isNaN(endDate.getTime())) {
+        const [hours, minutes] = shift.end_time.split(':');
+        endDate = new Date();
+        endDate.setHours(parseInt(hours), parseInt(minutes || 0), 0);
+
+        if (endDate < startDate) {
+          endDate.setDate(endDate.getDate() + 1);
+        }
+      }
+
+      return now >= startDate && now <= endDate;
+    } catch (e) {
+      return false;
+    }
+  };
+
   // Function to extract time from datetime string
   const formatTime = (timeString) => {
     if (!timeString) return "N/A";
@@ -301,7 +341,7 @@ export default function Shifts() {
               <div>
                 <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Active Shifts</p>
                 <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                  {shifts.filter(s => getShiftStatus(s.start_time, s.end_time) === "active").length}
+                  {shifts.filter(s => isShiftActive(s)).length}
                 </p>
               </div>
               <div className={`p-2 ${darkMode ? 'bg-green-900' : 'bg-green-100'} rounded-lg`}>
@@ -315,7 +355,7 @@ export default function Shifts() {
               <div>
                 <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Scheduled Today</p>
                 <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                  {shifts.length} {/* Since we don't have date info, show total */}
+                  {shifts.filter(s => isToday(s.shift_date)).length}
                 </p>
               </div>
               <div className={`p-2 ${darkMode ? 'bg-blue-900' : 'bg-blue-100'} rounded-lg`}>
@@ -329,7 +369,7 @@ export default function Shifts() {
               <div>
                 <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Drivers on Duty</p>
                 <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                  {new Set(shifts.filter(s => getShiftStatus(s.start_time, s.end_time) === "active").map(s => s.driver_id)).size}
+                  {new Set(shifts.filter(s => isShiftActive(s)).map(s => s.driver_id)).size}
                 </p>
               </div>
               <div className={`p-2 ${darkMode ? 'bg-amber-900' : 'bg-amber-100'} rounded-lg`}>
@@ -343,7 +383,7 @@ export default function Shifts() {
               <div>
                 <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Buses in Service</p>
                 <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                  {new Set(shifts.filter(s => getShiftStatus(s.start_time, s.end_time) === "active").map(s => s.bus_id)).size}
+                  {new Set(shifts.filter(s => isShiftActive(s)).map(s => s.bus_id)).size}
                 </p>
               </div>
               <div className={`p-2 ${darkMode ? 'bg-purple-900' : 'bg-purple-100'} rounded-lg`}>

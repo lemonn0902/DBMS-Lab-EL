@@ -211,7 +211,7 @@ export default function Reports() {
 
   // Helper function to generate monthly trend data
   const generateMonthlyTrend = (data, dateField = 'shift_date') => {
-    if (!data || data.length === 0) return {};
+    if (!data || data.length === 0) return [];
 
     // Find the latest date in the dataset to use as reference point
     const latestDate = data.reduce((latest, item) => {
@@ -243,8 +243,16 @@ export default function Reports() {
   // Fetch complaints data
   const fetchComplaintsData = async () => {
     try {
-      const complaintsRes = await api.get("/complaints");
+      const [complaintsRes, busesRes] = await Promise.all([
+        api.get("/complaints"),
+        api.get("/buses")
+      ]);
       const allComplaints = complaintsRes.data;
+      const buses = busesRes.data;
+      const busMap = {};
+      buses.forEach(bus => {
+        busMap[bus.bus_id] = bus;
+      });
 
       // Filter complaints by period
       const periodComplaints = filterByPeriod(allComplaints, 'complaint_date');
@@ -265,7 +273,7 @@ export default function Reports() {
         .map(([busId, count]) => ({
           bus_id: parseInt(busId),
           count,
-          registration_no: `BUS-${busId}`
+          registration_no: busMap[parseInt(busId)]?.registration_no || `BUS-${busId}`
         }))
         .sort((a, b) => b.count - a.count);
 
@@ -537,9 +545,9 @@ function SummaryReport({ data, onExport }) {
 /* -------------------- BUS USAGE -------------------- */
 function BusUsageReport({ data, onExport, drillDownData, setDrillDownData }) {
   const { darkMode } = useTheme();
-  const chartData = Object.entries(data.monthlyUsage || {}).map(
-    ([month, count]) => ({ month, count })
-  );
+  const chartData = Array.isArray(data.monthlyUsage)
+    ? data.monthlyUsage
+    : Object.entries(data.monthlyUsage || {}).map(([month, count]) => ({ month, count }));
 
   return (
     <div className="space-y-6">
@@ -641,9 +649,9 @@ function BusUsageReport({ data, onExport, drillDownData, setDrillDownData }) {
 /* -------------------- COMPLAINTS -------------------- */
 function ComplaintsReport({ data, onExport, drillDownData, setDrillDownData }) {
   const { darkMode } = useTheme();
-  const chartData = Object.entries(data.monthlyTrend || {}).map(
-    ([month, count]) => ({ month, count })
-  );
+  const chartData = Array.isArray(data.monthlyTrend)
+    ? data.monthlyTrend
+    : Object.entries(data.monthlyTrend || {}).map(([month, count]) => ({ month, count }));
 
   const resolutionRate = data.summary.total
     ? Math.round((data.summary.resolved / data.summary.total) * 100)

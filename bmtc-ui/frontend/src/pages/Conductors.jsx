@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useTheme } from "../contexts/ThemeContext.jsx";
 import {
   Search,
@@ -20,13 +20,17 @@ import {
   RefreshCw,
   ChevronLeft,
   ChevronRight,
-  Award
+  Award,
+  X
 } from "lucide-react";
 
 export default function Conductors() {
   const { darkMode } = useTheme();
+  const navigate = useNavigate();
 
   const [conductors, setConductors] = useState([]);
+  const [selectedConductor, setSelectedConductor] = useState(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [routes, setRoutes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -222,9 +226,9 @@ export default function Conductors() {
                       </span>
                     </td>
                     <td className="px-6 py-4 flex gap-2">
-                      <Eye className="h-4 w-4 cursor-pointer" />
-                      <Edit2 className="h-4 w-4 cursor-pointer" />
-                      <MoreVertical className="h-4 w-4 cursor-pointer" />
+                      <Eye className="h-4 w-4 cursor-pointer text-blue-500 hover:opacity-70" onClick={() => { setSelectedConductor(c); setShowDetailsModal(true); }} />
+                      <Edit2 className="h-4 w-4 cursor-pointer text-green-500 hover:opacity-70" onClick={() => navigate('/add-conductor', { state: { editConductor: c } })} />
+                      <MoreVertical className="h-4 w-4 cursor-pointer text-gray-400 hover:opacity-70" onClick={() => { setSelectedConductor(c); setShowDetailsModal(true); }} />
                     </td>
                   </tr>
                 );
@@ -250,6 +254,45 @@ export default function Conductors() {
           </div>
 
         </div>
+
+        {/* Details Modal */}
+        {showDetailsModal && selectedConductor && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className={`${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"} rounded-xl p-6 max-w-md w-full mx-4 border`}>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className={`text-xl font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>Conductor Details</h2>
+                <button onClick={() => setShowDetailsModal(false)} className={`text-gray-500 hover:text-gray-700`}>
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Conductor ID</p>
+                  <p className={`font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>{selectedConductor.conductor_id}</p>
+                </div>
+                <div>
+                  <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Name</p>
+                  <p className={`font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>{selectedConductor.name}</p>
+                </div>
+                <div>
+                  <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Contact</p>
+                  <p className={`font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>+91 {selectedConductor.contact_no}</p>
+                </div>
+                <div>
+                  <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Join Date</p>
+                  <p className={`font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>{new Date(selectedConductor.join_date).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Assigned Route</p>
+                  <p className={`font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>{selectedConductor.assigned_route || "Unassigned"}</p>
+                </div>
+              </div>
+              <button onClick={() => setShowDetailsModal(false)} className="w-full mt-6 bg-cyan-600 text-white py-2 rounded-lg font-semibold hover:bg-cyan-700">
+                Close
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

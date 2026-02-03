@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useTheme } from "../contexts/ThemeContext.jsx";
 import { UserPlus } from "lucide-react";
 import {
@@ -19,13 +19,17 @@ import {
   AlertCircle,
   ChevronLeft,
   ChevronRight,
-  RefreshCw
+  RefreshCw,
+  X
 } from "lucide-react";
 
 export default function Drivers() {
   const { darkMode } = useTheme();
+  const navigate = useNavigate();
 
   const [drivers, setDrivers] = useState([]);
+  const [selectedDriver, setSelectedDriver] = useState(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -114,7 +118,7 @@ export default function Drivers() {
             </p>
           </div>
 
-          <Link to="/AddDriver">
+          <Link to="/add-driver">
             <button className="inline-flex items-center px-4 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition shadow-sm">
               <UserPlus className="h-5 w-5 mr-2" />
               Add New Driver
@@ -126,9 +130,9 @@ export default function Drivers() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {[
             { label: "Total Drivers", value: drivers.length },
-            { label: "Active", value: drivers.filter(d => d.current_status === "active").length, color: "text-green-500" },
-            { label: "On Leave", value: drivers.filter(d => d.current_status === "on_leave").length, color: "text-amber-500" },
-            { label: "Suspended", value: drivers.filter(d => d.current_status === "suspended").length, color: "text-red-500" }
+            { label: "Active", value: drivers.filter(d => d.current_status === "Active").length, color: "text-green-500" },
+            { label: "On Leave", value: drivers.filter(d => d.current_status === "On Leave").length, color: "text-amber-500" },
+            { label: "Inactive", value: drivers.filter(d => d.current_status === "Inactive").length, color: "text-red-500" }
           ].map((s, i) => (
             <div
               key={i}
@@ -226,9 +230,9 @@ export default function Drivers() {
                   {getStatusBadge(driver.current_status)}
                 </td>
                 <td className="px-6 py-4 flex gap-2">
-                  <Eye className="h-4 w-4 cursor-pointer text-blue-500" />
-                  <Edit2 className="h-4 w-4 cursor-pointer text-green-500" />
-                  <MoreVertical className="h-4 w-4 cursor-pointer text-gray-400" />
+                  <Eye className="h-4 w-4 cursor-pointer text-blue-500 hover:opacity-70" onClick={() => { setSelectedDriver(driver); setShowDetailsModal(true); }} />
+                  <Edit2 className="h-4 w-4 cursor-pointer text-green-500 hover:opacity-70" onClick={() => navigate('/add-driver', { state: { editDriver: driver } })} />
+                  <MoreVertical className="h-4 w-4 cursor-pointer text-gray-400 hover:opacity-70" onClick={() => { setSelectedDriver(driver); setShowDetailsModal(true); }} />
                 </td>
               </tr>
             ))}
@@ -255,6 +259,51 @@ export default function Drivers() {
           </div>
         )}
       </div>
-    </div>
+      {/* Details Modal */}
+      {showDetailsModal && selectedDriver && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className={`${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"} rounded-xl p-6 max-w-md w-full mx-4 border`}>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className={`text-xl font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>Driver Details</h2>
+              <button onClick={() => setShowDetailsModal(false)} className={`text-gray-500 hover:text-gray-700`}>
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Driver ID</p>
+                <p className={`font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>{selectedDriver.driver_id}</p>
+              </div>
+              <div>
+                <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Name</p>
+                <p className={`font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>{selectedDriver.name}</p>
+              </div>
+              <div>
+                <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-500"}`}>License Number</p>
+                <p className={`font-mono font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>{selectedDriver.license_no}</p>
+              </div>
+              <div>
+                <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Contact</p>
+                <p className={`font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>{selectedDriver.contact_no}</p>
+              </div>
+              <div>
+                <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Join Date</p>
+                <p className={`font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>{new Date(selectedDriver.join_date).toLocaleDateString()}</p>
+              </div>
+              <div>
+                <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Experience</p>
+                <p className={`font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>{selectedDriver.experience_years} years</p>
+              </div>
+              <div>
+                <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Status</p>
+                <p className={`font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>{selectedDriver.current_status}</p>
+              </div>
+            </div>
+            <button onClick={() => setShowDetailsModal(false)} className="w-full mt-6 bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700">
+              Close
+            </button>
+          </div>
+        </div>
+      )}    </div>
   );
 }
